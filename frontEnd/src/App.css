@@ -1,0 +1,18 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import "tailwindcss";
+@import "./typography.css";
+
+@theme {
+  --color-yellow-400: #eead2d;
+  --color-yellow-500: #eead2d;
+  --color-yellow-600: #bb7534;
+  --color-brown-500: #3f3a36;
+  --color-gray-50: #f5f5f5;
+  --color-gray-500: #a6a6a6;
+  --font-sans: "Poppins";
+  --text-color: --color-brown-500;
+}
+body {
+  color: var(--color-brown-500);
+  background-color: var(--color-gray-50);
+}
