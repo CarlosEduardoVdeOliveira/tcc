@@ -1,22 +1,29 @@
-const express = require("express");
+import express from "express";
+import activityController from "../controllers/activityController.js";
+import authenticate from "../middlewares/auth.js";
+import validate from "../middlewares/validate.js";
+import activitySchema from "../schemas/activitySchema.js";
 const router = express.Router();
-const atividadeController = require("../controllers/atividadeController");
-const validate = require("../middlewares/validate");
-const { atividadeSchema } = require("../schemas/atividadeSchema");
 
-router.get("/", atividadeController.getAllAtividades);
-router.get("/:id", atividadeController.getAtividadeById);
-router.get("/colmeia/:colmeiaId", atividadeController.getAtividadesByColmeiaId);
+router.get("/", authenticate, activityController.getAllActivities);
+router.get("/:id", authenticate, activityController.getActivityById);
+router.get(
+  "/beehive/:beehiveId",
+  authenticate,
+  activityController.getActivitiesByBeehiveId
+);
 router.post(
   "/",
-  validate(atividadeSchema),
-  atividadeController.createAtividade
+  validate(activitySchema),
+  authenticate,
+  activityController.createActivity
 );
 router.put(
   "/:id",
-  validate(atividadeSchema),
-  atividadeController.updateAtividade
+  validate(activitySchema),
+  authenticate,
+  activityController.updateActivity
 );
-router.delete("/:id", atividadeController.deleteAtividade);
+router.delete("/:id", authenticate, activityController.deleteActivity);
 
-module.exports = router;
+export default router;

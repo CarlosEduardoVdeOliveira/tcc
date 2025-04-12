@@ -1,8 +1,9 @@
-const express = require("express");
-const cors = require("cors");
-const produtorRoutes = require("./routes/produtorRoutes");
-const colmeiaRoutes = require("./routes/colmeiaRoutes");
-const atividadeRoutes = require("./routes/atividadeRoutes");
+import cors from "cors";
+import express from "express";
+import activityRoutes from "./routers/activityRoutes.js";
+import beehiveRoutes from "./routers/beehiveRoutes.js";
+import loginRoutes from "./routers/loginRoutes.js";
+import producerRoutes from "./routers/producerRoutes.js";
 // Importe outras rotas aqui
 
 const app = express();
@@ -10,9 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/produtores", produtorRoutes);
-app.use("/api/colmeias", colmeiaRoutes);
-app.use("/api/atividades", atividadeRoutes);
+app.use("/api/v1/login", loginRoutes);
+app.use("/api/v1/producer", producerRoutes);
+app.use("/api/v1/beehive", beehiveRoutes);
+app.use("/api/v1/activity", activityRoutes);
 // Use outras rotas aqui
 
 app.use((_req, res) => {
@@ -24,4 +26,4 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Erro interno do servidor" });
 });
 
-module.exports = app;
+export default app;

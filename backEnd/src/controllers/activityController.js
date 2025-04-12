@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "../generated/prisma/client.js";
 const prisma = new PrismaClient();
 
 const getAllActivities = async (_req, res) => {
@@ -15,7 +15,7 @@ const getActivityById = async (req, res) => {
     const { id } = req.params;
     const activity = await prisma.activity.findUnique({
       where: { id: Number(id) },
-      include: { colmeia: true },
+      include: { beehive: true },
     });
 
     if (!activity) {
@@ -28,11 +28,11 @@ const getActivityById = async (req, res) => {
   }
 };
 
-const getActivitiesByColmeiaId = async (req, res) => {
+const getActivitiesByBeehiveId = async (req, res) => {
   try {
-    const { colmeiaId } = req.params;
+    const { beehiveId } = req.params;
     const activities = await prisma.activity.findMany({
-      where: { colmeiaId: Number(colmeiaId) },
+      where: { beehiveId: Number(beehiveId) },
     });
     res.json(activities);
   } catch (error) {
@@ -75,11 +75,10 @@ const deleteActivity = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-module.exports = {
+export default {
   getAllActivities,
   getActivityById,
-  getActivitiesByColmeiaId,
+  getActivitiesByBeehiveId,
   createActivity,
   updateActivity,
   deleteActivity,

@@ -1,13 +1,19 @@
-const express = require("express");
+import express from "express";
+import producerController from "../controllers/producerController.js";
+import authenticate from "../middlewares/auth.js";
+import validate from "../middlewares/validate.js";
+import producerSchema from "../schemas/ProducerSchema.js";
 const router = express.Router();
-const produtorController = require("../controllers/produtorController");
-const validate = require("../middlewares/validate");
-const { produtorSchema } = require("../schemas/produtorSchema");
 
-router.get("/", produtorController.getAllProdutores);
-router.get("/:id", produtorController.getProdutorById);
-router.post("/", validate(produtorSchema), produtorController.createProdutor);
-router.put("/:id", validate(produtorSchema), produtorController.updateProdutor);
-router.delete("/:id", produtorController.deleteProdutor);
+router.get("/", producerController.getAllProducers);
+router.get("/:id", producerController.getProducerById);
+router.post("/", validate(producerSchema), producerController.createProducer);
+router.put(
+  "/:id",
+  validate(producerSchema),
+  authenticate,
+  producerController.updateProducer
+);
+router.delete("/:id", authenticate, producerController.deleteProducer);
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "../generated/prisma/client.js";
 const prisma = new PrismaClient();
 
 const getAllProductionsHoney = async (_req, res) => {
@@ -76,7 +76,7 @@ const deleteProductionHoney = async (req, res) => {
   }
 };
 
-module.exports = {
+export default {
   getAllProductionsHoney,
   getProductionHoneyById,
   getProductionsHoneyByBeehiveId,

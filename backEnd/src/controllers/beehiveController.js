@@ -1,4 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
+import { z } from "zod";
+import { PrismaClient } from "../generated/prisma/client.js";
+import beehiveSchema from "../schemas/BeehiveSchema.js";
+
 const prisma = new PrismaClient();
 
 const getAllBeehives = async (_req, res) => {
@@ -17,8 +20,8 @@ const getBeehiveById = async (req, res) => {
       where: { id: Number(id) },
       include: {
         activities: true,
-        productionHoney: true,
-        temperaturesHumidity: true,
+        productionsHoney: true,
+        temperaturesHumidities: true,
         foods: true,
         diseases: true,
       },
@@ -36,24 +39,46 @@ const getBeehiveById = async (req, res) => {
 
 const createBeehive = async (req, res) => {
   try {
+    const data = beehiveSchema.parse(req.body);
+
     const beehive = await prisma.beehive.create({
-      data: req.body,
+      data,
     });
+
     res.status(201).json(beehive);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        status: "error",
+        message: "Dados inválidos",
+        errors: error.errors,
+      });
+    }
+
+    res.status(500).json({ status: "error", message: error.message });
   }
 };
 
 const updateBeehive = async (req, res) => {
   try {
     const { id } = req.params;
+    const data = beehiveSchema.parse(req.body);
+
     const beehive = await prisma.beehive.update({
       where: { id: Number(id) },
-      data: req.body,
+      data,
     });
+
     res.json(beehive);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        status: "error",
+        message: "Dados inválidos",
+        errors: error.errors,
+      });
+    }
+
     res.status(500).json({ error: error.message });
   }
 };
@@ -70,7 +95,7 @@ const deleteBeehive = async (req, res) => {
   }
 };
 
-module.exports = {
+export default {
   getAllBeehives,
   getBeehiveById,
   createBeehive,

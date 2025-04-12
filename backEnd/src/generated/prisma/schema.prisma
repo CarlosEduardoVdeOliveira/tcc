@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Producer {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  cpfCnpj   String    @unique // CPF ou CNPJ
+  longitude Float
+  latitude  Float
+  startDate DateTime
+  status    String
+  beehives  Beehive[]
+
+  @@map("producers")
+}
+
+model Beehive {
+  id                     Int                    @id @default(autoincrement())
+  producerId             Int
+  name                   String
+  longitude              Float
+  latitude               Float
+  startDate              DateTime
+  status                 String
+  typeBeehive            String
+  observations           String?
+  producer               Producer               @relation(fields: [producerId], references: [id])
+  activities             Activity[]
+  productionsHoney       ProductionHoney[]
+  temperaturesHumidities TemperaturesHumidity[]
+  foods                  Food[]
+  diseases               Disease[]
+
+  @@map("beehives")
+}
+
+model Activity {
+  id           Int      @id @default(autoincrement())
+  beehiveId    Int
+  data         DateTime
+  typeActivity String
+  descriptions String
+  observations String?
+  beehive      Beehive  @relation(fields: [beehiveId], references: [id])
+
+  @@map("activities")
+}
+
+model ProductionHoney {
+  id             Int      @id @default(autoincrement())
+  beehiveId      Int
+  dateCollection DateTime
+  amount         Decimal
+  quality        String
+  observations   String?
+  beehive        Beehive  @relation(fields: [beehiveId], references: [id])
+
+  @@map("production_honey")
+}
+
+model TemperaturesHumidity {
+  id                  Int      @id @default(autoincrement())
+  beehiveId           Int
+  data                DateTime
+  internalTemperature Decimal
+  externalTemperature Decimal
+  humidityInternal    Decimal
+  humidityExternal    Decimal
+  beehive             Beehive  @relation(fields: [beehiveId], references: [id])
+
+  @@map("temperatures_humidity")
+}
+
+model Food {
+  id           Int      @id @default(autoincrement())
+  beehiveId    Int
+  date         DateTime
+  typeFood     String
+  amount       Decimal
+  observations String?
+  beehive      Beehive  @relation(fields: [beehiveId], references: [id])
+
+  @@map("foods")
+}
+
+model Disease {
+  id            Int      @id @default(autoincrement())
+  beehiveId     Int
+  data          DateTime
+  diseasePrague String
+  treatment     String
+  observations  String?
+  beehive       Beehive  @relation(fields: [beehiveId], references: [id])
+
+  @@map("diseases")
+}
