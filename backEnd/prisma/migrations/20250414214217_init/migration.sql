@@ -29,7 +29,7 @@ CREATE TABLE "beehives" (
 CREATE TABLE "activities" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "beehiveId" INTEGER NOT NULL,
-    "data" DATETIME NOT NULL,
+    "dateActivity" DATETIME NOT NULL,
     "typeActivity" TEXT NOT NULL,
     "descriptions" TEXT NOT NULL,
     "observations" TEXT,
@@ -51,7 +51,7 @@ CREATE TABLE "production_honey" (
 CREATE TABLE "temperatures_humidity" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "beehiveId" INTEGER NOT NULL,
-    "data" DATETIME NOT NULL,
+    "dateMeasurement" DATETIME NOT NULL,
     "internalTemperature" DECIMAL NOT NULL,
     "externalTemperature" DECIMAL NOT NULL,
     "humidityInternal" DECIMAL NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE "temperatures_humidity" (
 CREATE TABLE "foods" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "beehiveId" INTEGER NOT NULL,
-    "date" DATETIME NOT NULL,
+    "dateFeeding" DATETIME NOT NULL,
     "typeFood" TEXT NOT NULL,
     "amount" DECIMAL NOT NULL,
     "observations" TEXT,
@@ -74,7 +74,7 @@ CREATE TABLE "foods" (
 CREATE TABLE "diseases" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "beehiveId" INTEGER NOT NULL,
-    "data" DATETIME NOT NULL,
+    "dateDiagnosis" DATETIME NOT NULL,
     "diseasePrague" TEXT NOT NULL,
     "treatment" TEXT NOT NULL,
     "observations" TEXT,

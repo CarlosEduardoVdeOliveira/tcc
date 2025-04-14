@@ -1,10 +1,14 @@
 import cors from "cors";
 import express from "express";
+import authenticate from "./middlewares/auth.js";
 import activityRoutes from "./routers/activityRoutes.js";
 import beehiveRoutes from "./routers/beehiveRoutes.js";
+import diseaseRoutes from "./routers/diseaseRoutes.js";
+import foodRoutes from "./routers/foodRoutes.js";
 import loginRoutes from "./routers/loginRoutes.js";
 import producerRoutes from "./routers/producerRoutes.js";
-// Importe outras rotas aqui
+import productionHoneyRoutes from "./routers/productionHoneyRoutes.js";
+import temperatureHumidityRoutes from "./routers/temperatureHumidityRoutes.js";
 
 const app = express();
 
@@ -13,9 +17,16 @@ app.use(express.json());
 
 app.use("/api/v1/login", loginRoutes);
 app.use("/api/v1/producer", producerRoutes);
-app.use("/api/v1/beehive", beehiveRoutes);
-app.use("/api/v1/activity", activityRoutes);
-// Use outras rotas aqui
+app.use("/api/v1/beehive", authenticate, beehiveRoutes);
+app.use("/api/v1/activity", authenticate, activityRoutes);
+app.use("/api/v1/disease", authenticate, diseaseRoutes);
+app.use("/api/v1/food", authenticate, foodRoutes);
+app.use("/api/v1/production_honey", authenticate, productionHoneyRoutes);
+app.use(
+  "/api/v1/temperature_humidity",
+  authenticate,
+  temperatureHumidityRoutes
+);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Rota não encontrada" });

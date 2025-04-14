@@ -52,7 +52,7 @@ model Beehive {
 model Activity {
   id           Int      @id @default(autoincrement())
   beehiveId    Int
-  data         DateTime
+  dateActivity DateTime
   typeActivity String
   descriptions String
   observations String?
@@ -76,7 +76,7 @@ model ProductionHoney {
 model TemperaturesHumidity {
   id                  Int      @id @default(autoincrement())
   beehiveId           Int
-  data                DateTime
+  dateMeasurement     DateTime
   internalTemperature Decimal
   externalTemperature Decimal
   humidityInternal    Decimal
@@ -89,7 +89,7 @@ model TemperaturesHumidity {
 model Food {
   id           Int      @id @default(autoincrement())
   beehiveId    Int
-  date         DateTime
+  dateFeeding  DateTime
   typeFood     String
   amount       Decimal
   observations String?
@@ -101,7 +101,7 @@ model Food {
 model Disease {
   id            Int      @id @default(autoincrement())
   beehiveId     Int
-  data          DateTime
+  dateDiagnosis DateTime
   diseasePrague String
   treatment     String
   observations  String?

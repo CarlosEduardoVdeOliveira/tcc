@@ -141,7 +141,7 @@ exports.Prisma.BeehiveScalarFieldEnum = {
 exports.Prisma.ActivityScalarFieldEnum = {
   id: 'id',
   beehiveId: 'beehiveId',
-  data: 'data',
+  dateActivity: 'dateActivity',
   typeActivity: 'typeActivity',
   descriptions: 'descriptions',
   observations: 'observations'
@@ -159,7 +159,7 @@ exports.Prisma.ProductionHoneyScalarFieldEnum = {
 exports.Prisma.TemperaturesHumidityScalarFieldEnum = {
   id: 'id',
   beehiveId: 'beehiveId',
-  data: 'data',
+  dateMeasurement: 'dateMeasurement',
   internalTemperature: 'internalTemperature',
   externalTemperature: 'externalTemperature',
   humidityInternal: 'humidityInternal',
@@ -169,7 +169,7 @@ exports.Prisma.TemperaturesHumidityScalarFieldEnum = {
 exports.Prisma.FoodScalarFieldEnum = {
   id: 'id',
   beehiveId: 'beehiveId',
-  date: 'date',
+  dateFeeding: 'dateFeeding',
   typeFood: 'typeFood',
   amount: 'amount',
   observations: 'observations'
@@ -178,7 +178,7 @@ exports.Prisma.FoodScalarFieldEnum = {
 exports.Prisma.DiseaseScalarFieldEnum = {
   id: 'id',
   beehiveId: 'beehiveId',
-  data: 'data',
+  dateDiagnosis: 'dateDiagnosis',
   diseasePrague: 'diseasePrague',
   treatment: 'treatment',
   observations: 'observations'

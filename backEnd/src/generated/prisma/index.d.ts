@@ -3995,7 +3995,7 @@ export namespace Prisma {
   export type ActivityMinAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    data: Date | null
+    dateActivity: Date | null
     typeActivity: string | null
     descriptions: string | null
     observations: string | null
@@ -4004,7 +4004,7 @@ export namespace Prisma {
   export type ActivityMaxAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    data: Date | null
+    dateActivity: Date | null
     typeActivity: string | null
     descriptions: string | null
     observations: string | null
@@ -4013,7 +4013,7 @@ export namespace Prisma {
   export type ActivityCountAggregateOutputType = {
     id: number
     beehiveId: number
-    data: number
+    dateActivity: number
     typeActivity: number
     descriptions: number
     observations: number
@@ -4034,7 +4034,7 @@ export namespace Prisma {
   export type ActivityMinAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateActivity?: true
     typeActivity?: true
     descriptions?: true
     observations?: true
@@ -4043,7 +4043,7 @@ export namespace Prisma {
   export type ActivityMaxAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateActivity?: true
     typeActivity?: true
     descriptions?: true
     observations?: true
@@ -4052,7 +4052,7 @@ export namespace Prisma {
   export type ActivityCountAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateActivity?: true
     typeActivity?: true
     descriptions?: true
     observations?: true
@@ -4148,7 +4148,7 @@ export namespace Prisma {
   export type ActivityGroupByOutputType = {
     id: number
     beehiveId: number
-    data: Date
+    dateActivity: Date
     typeActivity: string
     descriptions: string
     observations: string | null
@@ -4176,7 +4176,7 @@ export namespace Prisma {
   export type ActivitySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateActivity?: boolean
     typeActivity?: boolean
     descriptions?: boolean
     observations?: boolean
@@ -4186,7 +4186,7 @@ export namespace Prisma {
   export type ActivitySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateActivity?: boolean
     typeActivity?: boolean
     descriptions?: boolean
     observations?: boolean
@@ -4196,7 +4196,7 @@ export namespace Prisma {
   export type ActivitySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateActivity?: boolean
     typeActivity?: boolean
     descriptions?: boolean
     observations?: boolean
@@ -4206,13 +4206,13 @@ export namespace Prisma {
   export type ActivitySelectScalar = {
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateActivity?: boolean
     typeActivity?: boolean
     descriptions?: boolean
     observations?: boolean
   }
 
-  export type ActivityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "data" | "typeActivity" | "descriptions" | "observations", ExtArgs["result"]["activity"]>
+  export type ActivityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "dateActivity" | "typeActivity" | "descriptions" | "observations", ExtArgs["result"]["activity"]>
   export type ActivityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     beehive?: boolean | BeehiveDefaultArgs<ExtArgs>
   }
@@ -4231,7 +4231,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       beehiveId: number
-      data: Date
+      dateActivity: Date
       typeActivity: string
       descriptions: string
       observations: string | null
@@ -4661,7 +4661,7 @@ export namespace Prisma {
   interface ActivityFieldRefs {
     readonly id: FieldRef<"Activity", 'Int'>
     readonly beehiveId: FieldRef<"Activity", 'Int'>
-    readonly data: FieldRef<"Activity", 'DateTime'>
+    readonly dateActivity: FieldRef<"Activity", 'DateTime'>
     readonly typeActivity: FieldRef<"Activity", 'String'>
     readonly descriptions: FieldRef<"Activity", 'String'>
     readonly observations: FieldRef<"Activity", 'String'>
@@ -6221,7 +6221,7 @@ export namespace Prisma {
   export type TemperaturesHumidityMinAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    data: Date | null
+    dateMeasurement: Date | null
     internalTemperature: Decimal | null
     externalTemperature: Decimal | null
     humidityInternal: Decimal | null
@@ -6231,7 +6231,7 @@ export namespace Prisma {
   export type TemperaturesHumidityMaxAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    data: Date | null
+    dateMeasurement: Date | null
     internalTemperature: Decimal | null
     externalTemperature: Decimal | null
     humidityInternal: Decimal | null
@@ -6241,7 +6241,7 @@ export namespace Prisma {
   export type TemperaturesHumidityCountAggregateOutputType = {
     id: number
     beehiveId: number
-    data: number
+    dateMeasurement: number
     internalTemperature: number
     externalTemperature: number
     humidityInternal: number
@@ -6271,7 +6271,7 @@ export namespace Prisma {
   export type TemperaturesHumidityMinAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateMeasurement?: true
     internalTemperature?: true
     externalTemperature?: true
     humidityInternal?: true
@@ -6281,7 +6281,7 @@ export namespace Prisma {
   export type TemperaturesHumidityMaxAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateMeasurement?: true
     internalTemperature?: true
     externalTemperature?: true
     humidityInternal?: true
@@ -6291,7 +6291,7 @@ export namespace Prisma {
   export type TemperaturesHumidityCountAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateMeasurement?: true
     internalTemperature?: true
     externalTemperature?: true
     humidityInternal?: true
@@ -6388,7 +6388,7 @@ export namespace Prisma {
   export type TemperaturesHumidityGroupByOutputType = {
     id: number
     beehiveId: number
-    data: Date
+    dateMeasurement: Date
     internalTemperature: Decimal
     externalTemperature: Decimal
     humidityInternal: Decimal
@@ -6417,7 +6417,7 @@ export namespace Prisma {
   export type TemperaturesHumiditySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateMeasurement?: boolean
     internalTemperature?: boolean
     externalTemperature?: boolean
     humidityInternal?: boolean
@@ -6428,7 +6428,7 @@ export namespace Prisma {
   export type TemperaturesHumiditySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateMeasurement?: boolean
     internalTemperature?: boolean
     externalTemperature?: boolean
     humidityInternal?: boolean
@@ -6439,7 +6439,7 @@ export namespace Prisma {
   export type TemperaturesHumiditySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateMeasurement?: boolean
     internalTemperature?: boolean
     externalTemperature?: boolean
     humidityInternal?: boolean
@@ -6450,14 +6450,14 @@ export namespace Prisma {
   export type TemperaturesHumiditySelectScalar = {
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateMeasurement?: boolean
     internalTemperature?: boolean
     externalTemperature?: boolean
     humidityInternal?: boolean
     humidityExternal?: boolean
   }
 
-  export type TemperaturesHumidityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "data" | "internalTemperature" | "externalTemperature" | "humidityInternal" | "humidityExternal", ExtArgs["result"]["temperaturesHumidity"]>
+  export type TemperaturesHumidityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "dateMeasurement" | "internalTemperature" | "externalTemperature" | "humidityInternal" | "humidityExternal", ExtArgs["result"]["temperaturesHumidity"]>
   export type TemperaturesHumidityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     beehive?: boolean | BeehiveDefaultArgs<ExtArgs>
   }
@@ -6476,7 +6476,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       beehiveId: number
-      data: Date
+      dateMeasurement: Date
       internalTemperature: Prisma.Decimal
       externalTemperature: Prisma.Decimal
       humidityInternal: Prisma.Decimal
@@ -6907,7 +6907,7 @@ export namespace Prisma {
   interface TemperaturesHumidityFieldRefs {
     readonly id: FieldRef<"TemperaturesHumidity", 'Int'>
     readonly beehiveId: FieldRef<"TemperaturesHumidity", 'Int'>
-    readonly data: FieldRef<"TemperaturesHumidity", 'DateTime'>
+    readonly dateMeasurement: FieldRef<"TemperaturesHumidity", 'DateTime'>
     readonly internalTemperature: FieldRef<"TemperaturesHumidity", 'Decimal'>
     readonly externalTemperature: FieldRef<"TemperaturesHumidity", 'Decimal'>
     readonly humidityInternal: FieldRef<"TemperaturesHumidity", 'Decimal'>
@@ -7351,7 +7351,7 @@ export namespace Prisma {
   export type FoodMinAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    date: Date | null
+    dateFeeding: Date | null
     typeFood: string | null
     amount: Decimal | null
     observations: string | null
@@ -7360,7 +7360,7 @@ export namespace Prisma {
   export type FoodMaxAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    date: Date | null
+    dateFeeding: Date | null
     typeFood: string | null
     amount: Decimal | null
     observations: string | null
@@ -7369,7 +7369,7 @@ export namespace Prisma {
   export type FoodCountAggregateOutputType = {
     id: number
     beehiveId: number
-    date: number
+    dateFeeding: number
     typeFood: number
     amount: number
     observations: number
@@ -7392,7 +7392,7 @@ export namespace Prisma {
   export type FoodMinAggregateInputType = {
     id?: true
     beehiveId?: true
-    date?: true
+    dateFeeding?: true
     typeFood?: true
     amount?: true
     observations?: true
@@ -7401,7 +7401,7 @@ export namespace Prisma {
   export type FoodMaxAggregateInputType = {
     id?: true
     beehiveId?: true
-    date?: true
+    dateFeeding?: true
     typeFood?: true
     amount?: true
     observations?: true
@@ -7410,7 +7410,7 @@ export namespace Prisma {
   export type FoodCountAggregateInputType = {
     id?: true
     beehiveId?: true
-    date?: true
+    dateFeeding?: true
     typeFood?: true
     amount?: true
     observations?: true
@@ -7506,7 +7506,7 @@ export namespace Prisma {
   export type FoodGroupByOutputType = {
     id: number
     beehiveId: number
-    date: Date
+    dateFeeding: Date
     typeFood: string
     amount: Decimal
     observations: string | null
@@ -7534,7 +7534,7 @@ export namespace Prisma {
   export type FoodSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    date?: boolean
+    dateFeeding?: boolean
     typeFood?: boolean
     amount?: boolean
     observations?: boolean
@@ -7544,7 +7544,7 @@ export namespace Prisma {
   export type FoodSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    date?: boolean
+    dateFeeding?: boolean
     typeFood?: boolean
     amount?: boolean
     observations?: boolean
@@ -7554,7 +7554,7 @@ export namespace Prisma {
   export type FoodSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    date?: boolean
+    dateFeeding?: boolean
     typeFood?: boolean
     amount?: boolean
     observations?: boolean
@@ -7564,13 +7564,13 @@ export namespace Prisma {
   export type FoodSelectScalar = {
     id?: boolean
     beehiveId?: boolean
-    date?: boolean
+    dateFeeding?: boolean
     typeFood?: boolean
     amount?: boolean
     observations?: boolean
   }
 
-  export type FoodOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "date" | "typeFood" | "amount" | "observations", ExtArgs["result"]["food"]>
+  export type FoodOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "dateFeeding" | "typeFood" | "amount" | "observations", ExtArgs["result"]["food"]>
   export type FoodInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     beehive?: boolean | BeehiveDefaultArgs<ExtArgs>
   }
@@ -7589,7 +7589,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       beehiveId: number
-      date: Date
+      dateFeeding: Date
       typeFood: string
       amount: Prisma.Decimal
       observations: string | null
@@ -8019,7 +8019,7 @@ export namespace Prisma {
   interface FoodFieldRefs {
     readonly id: FieldRef<"Food", 'Int'>
     readonly beehiveId: FieldRef<"Food", 'Int'>
-    readonly date: FieldRef<"Food", 'DateTime'>
+    readonly dateFeeding: FieldRef<"Food", 'DateTime'>
     readonly typeFood: FieldRef<"Food", 'String'>
     readonly amount: FieldRef<"Food", 'Decimal'>
     readonly observations: FieldRef<"Food", 'String'>
@@ -8460,7 +8460,7 @@ export namespace Prisma {
   export type DiseaseMinAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    data: Date | null
+    dateDiagnosis: Date | null
     diseasePrague: string | null
     treatment: string | null
     observations: string | null
@@ -8469,7 +8469,7 @@ export namespace Prisma {
   export type DiseaseMaxAggregateOutputType = {
     id: number | null
     beehiveId: number | null
-    data: Date | null
+    dateDiagnosis: Date | null
     diseasePrague: string | null
     treatment: string | null
     observations: string | null
@@ -8478,7 +8478,7 @@ export namespace Prisma {
   export type DiseaseCountAggregateOutputType = {
     id: number
     beehiveId: number
-    data: number
+    dateDiagnosis: number
     diseasePrague: number
     treatment: number
     observations: number
@@ -8499,7 +8499,7 @@ export namespace Prisma {
   export type DiseaseMinAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateDiagnosis?: true
     diseasePrague?: true
     treatment?: true
     observations?: true
@@ -8508,7 +8508,7 @@ export namespace Prisma {
   export type DiseaseMaxAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateDiagnosis?: true
     diseasePrague?: true
     treatment?: true
     observations?: true
@@ -8517,7 +8517,7 @@ export namespace Prisma {
   export type DiseaseCountAggregateInputType = {
     id?: true
     beehiveId?: true
-    data?: true
+    dateDiagnosis?: true
     diseasePrague?: true
     treatment?: true
     observations?: true
@@ -8613,7 +8613,7 @@ export namespace Prisma {
   export type DiseaseGroupByOutputType = {
     id: number
     beehiveId: number
-    data: Date
+    dateDiagnosis: Date
     diseasePrague: string
     treatment: string
     observations: string | null
@@ -8641,7 +8641,7 @@ export namespace Prisma {
   export type DiseaseSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateDiagnosis?: boolean
     diseasePrague?: boolean
     treatment?: boolean
     observations?: boolean
@@ -8651,7 +8651,7 @@ export namespace Prisma {
   export type DiseaseSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateDiagnosis?: boolean
     diseasePrague?: boolean
     treatment?: boolean
     observations?: boolean
@@ -8661,7 +8661,7 @@ export namespace Prisma {
   export type DiseaseSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateDiagnosis?: boolean
     diseasePrague?: boolean
     treatment?: boolean
     observations?: boolean
@@ -8671,13 +8671,13 @@ export namespace Prisma {
   export type DiseaseSelectScalar = {
     id?: boolean
     beehiveId?: boolean
-    data?: boolean
+    dateDiagnosis?: boolean
     diseasePrague?: boolean
     treatment?: boolean
     observations?: boolean
   }
 
-  export type DiseaseOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "data" | "diseasePrague" | "treatment" | "observations", ExtArgs["result"]["disease"]>
+  export type DiseaseOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "beehiveId" | "dateDiagnosis" | "diseasePrague" | "treatment" | "observations", ExtArgs["result"]["disease"]>
   export type DiseaseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     beehive?: boolean | BeehiveDefaultArgs<ExtArgs>
   }
@@ -8696,7 +8696,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       beehiveId: number
-      data: Date
+      dateDiagnosis: Date
       diseasePrague: string
       treatment: string
       observations: string | null
@@ -9126,7 +9126,7 @@ export namespace Prisma {
   interface DiseaseFieldRefs {
     readonly id: FieldRef<"Disease", 'Int'>
     readonly beehiveId: FieldRef<"Disease", 'Int'>
-    readonly data: FieldRef<"Disease", 'DateTime'>
+    readonly dateDiagnosis: FieldRef<"Disease", 'DateTime'>
     readonly diseasePrague: FieldRef<"Disease", 'String'>
     readonly treatment: FieldRef<"Disease", 'String'>
     readonly observations: FieldRef<"Disease", 'String'>
@@ -9586,7 +9586,7 @@ export namespace Prisma {
   export const ActivityScalarFieldEnum: {
     id: 'id',
     beehiveId: 'beehiveId',
-    data: 'data',
+    dateActivity: 'dateActivity',
     typeActivity: 'typeActivity',
     descriptions: 'descriptions',
     observations: 'observations'
@@ -9610,7 +9610,7 @@ export namespace Prisma {
   export const TemperaturesHumidityScalarFieldEnum: {
     id: 'id',
     beehiveId: 'beehiveId',
-    data: 'data',
+    dateMeasurement: 'dateMeasurement',
     internalTemperature: 'internalTemperature',
     externalTemperature: 'externalTemperature',
     humidityInternal: 'humidityInternal',
@@ -9623,7 +9623,7 @@ export namespace Prisma {
   export const FoodScalarFieldEnum: {
     id: 'id',
     beehiveId: 'beehiveId',
-    date: 'date',
+    dateFeeding: 'dateFeeding',
     typeFood: 'typeFood',
     amount: 'amount',
     observations: 'observations'
@@ -9635,7 +9635,7 @@ export namespace Prisma {
   export const DiseaseScalarFieldEnum: {
     id: 'id',
     beehiveId: 'beehiveId',
-    data: 'data',
+    dateDiagnosis: 'dateDiagnosis',
     diseasePrague: 'diseasePrague',
     treatment: 'treatment',
     observations: 'observations'
@@ -9878,7 +9878,7 @@ export namespace Prisma {
     NOT?: ActivityWhereInput | ActivityWhereInput[]
     id?: IntFilter<"Activity"> | number
     beehiveId?: IntFilter<"Activity"> | number
-    data?: DateTimeFilter<"Activity"> | Date | string
+    dateActivity?: DateTimeFilter<"Activity"> | Date | string
     typeActivity?: StringFilter<"Activity"> | string
     descriptions?: StringFilter<"Activity"> | string
     observations?: StringNullableFilter<"Activity"> | string | null
@@ -9888,7 +9888,7 @@ export namespace Prisma {
   export type ActivityOrderByWithRelationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateActivity?: SortOrder
     typeActivity?: SortOrder
     descriptions?: SortOrder
     observations?: SortOrderInput | SortOrder
@@ -9901,7 +9901,7 @@ export namespace Prisma {
     OR?: ActivityWhereInput[]
     NOT?: ActivityWhereInput | ActivityWhereInput[]
     beehiveId?: IntFilter<"Activity"> | number
-    data?: DateTimeFilter<"Activity"> | Date | string
+    dateActivity?: DateTimeFilter<"Activity"> | Date | string
     typeActivity?: StringFilter<"Activity"> | string
     descriptions?: StringFilter<"Activity"> | string
     observations?: StringNullableFilter<"Activity"> | string | null
@@ -9911,7 +9911,7 @@ export namespace Prisma {
   export type ActivityOrderByWithAggregationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateActivity?: SortOrder
     typeActivity?: SortOrder
     descriptions?: SortOrder
     observations?: SortOrderInput | SortOrder
@@ -9928,7 +9928,7 @@ export namespace Prisma {
     NOT?: ActivityScalarWhereWithAggregatesInput | ActivityScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Activity"> | number
     beehiveId?: IntWithAggregatesFilter<"Activity"> | number
-    data?: DateTimeWithAggregatesFilter<"Activity"> | Date | string
+    dateActivity?: DateTimeWithAggregatesFilter<"Activity"> | Date | string
     typeActivity?: StringWithAggregatesFilter<"Activity"> | string
     descriptions?: StringWithAggregatesFilter<"Activity"> | string
     observations?: StringNullableWithAggregatesFilter<"Activity"> | string | null
@@ -10002,7 +10002,7 @@ export namespace Prisma {
     NOT?: TemperaturesHumidityWhereInput | TemperaturesHumidityWhereInput[]
     id?: IntFilter<"TemperaturesHumidity"> | number
     beehiveId?: IntFilter<"TemperaturesHumidity"> | number
-    data?: DateTimeFilter<"TemperaturesHumidity"> | Date | string
+    dateMeasurement?: DateTimeFilter<"TemperaturesHumidity"> | Date | string
     internalTemperature?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
@@ -10013,7 +10013,7 @@ export namespace Prisma {
   export type TemperaturesHumidityOrderByWithRelationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateMeasurement?: SortOrder
     internalTemperature?: SortOrder
     externalTemperature?: SortOrder
     humidityInternal?: SortOrder
@@ -10027,7 +10027,7 @@ export namespace Prisma {
     OR?: TemperaturesHumidityWhereInput[]
     NOT?: TemperaturesHumidityWhereInput | TemperaturesHumidityWhereInput[]
     beehiveId?: IntFilter<"TemperaturesHumidity"> | number
-    data?: DateTimeFilter<"TemperaturesHumidity"> | Date | string
+    dateMeasurement?: DateTimeFilter<"TemperaturesHumidity"> | Date | string
     internalTemperature?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
@@ -10038,7 +10038,7 @@ export namespace Prisma {
   export type TemperaturesHumidityOrderByWithAggregationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateMeasurement?: SortOrder
     internalTemperature?: SortOrder
     externalTemperature?: SortOrder
     humidityInternal?: SortOrder
@@ -10056,7 +10056,7 @@ export namespace Prisma {
     NOT?: TemperaturesHumidityScalarWhereWithAggregatesInput | TemperaturesHumidityScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"TemperaturesHumidity"> | number
     beehiveId?: IntWithAggregatesFilter<"TemperaturesHumidity"> | number
-    data?: DateTimeWithAggregatesFilter<"TemperaturesHumidity"> | Date | string
+    dateMeasurement?: DateTimeWithAggregatesFilter<"TemperaturesHumidity"> | Date | string
     internalTemperature?: DecimalWithAggregatesFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalWithAggregatesFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalWithAggregatesFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
@@ -10069,7 +10069,7 @@ export namespace Prisma {
     NOT?: FoodWhereInput | FoodWhereInput[]
     id?: IntFilter<"Food"> | number
     beehiveId?: IntFilter<"Food"> | number
-    date?: DateTimeFilter<"Food"> | Date | string
+    dateFeeding?: DateTimeFilter<"Food"> | Date | string
     typeFood?: StringFilter<"Food"> | string
     amount?: DecimalFilter<"Food"> | Decimal | DecimalJsLike | number | string
     observations?: StringNullableFilter<"Food"> | string | null
@@ -10079,7 +10079,7 @@ export namespace Prisma {
   export type FoodOrderByWithRelationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    date?: SortOrder
+    dateFeeding?: SortOrder
     typeFood?: SortOrder
     amount?: SortOrder
     observations?: SortOrderInput | SortOrder
@@ -10092,7 +10092,7 @@ export namespace Prisma {
     OR?: FoodWhereInput[]
     NOT?: FoodWhereInput | FoodWhereInput[]
     beehiveId?: IntFilter<"Food"> | number
-    date?: DateTimeFilter<"Food"> | Date | string
+    dateFeeding?: DateTimeFilter<"Food"> | Date | string
     typeFood?: StringFilter<"Food"> | string
     amount?: DecimalFilter<"Food"> | Decimal | DecimalJsLike | number | string
     observations?: StringNullableFilter<"Food"> | string | null
@@ -10102,7 +10102,7 @@ export namespace Prisma {
   export type FoodOrderByWithAggregationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    date?: SortOrder
+    dateFeeding?: SortOrder
     typeFood?: SortOrder
     amount?: SortOrder
     observations?: SortOrderInput | SortOrder
@@ -10119,7 +10119,7 @@ export namespace Prisma {
     NOT?: FoodScalarWhereWithAggregatesInput | FoodScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Food"> | number
     beehiveId?: IntWithAggregatesFilter<"Food"> | number
-    date?: DateTimeWithAggregatesFilter<"Food"> | Date | string
+    dateFeeding?: DateTimeWithAggregatesFilter<"Food"> | Date | string
     typeFood?: StringWithAggregatesFilter<"Food"> | string
     amount?: DecimalWithAggregatesFilter<"Food"> | Decimal | DecimalJsLike | number | string
     observations?: StringNullableWithAggregatesFilter<"Food"> | string | null
@@ -10131,7 +10131,7 @@ export namespace Prisma {
     NOT?: DiseaseWhereInput | DiseaseWhereInput[]
     id?: IntFilter<"Disease"> | number
     beehiveId?: IntFilter<"Disease"> | number
-    data?: DateTimeFilter<"Disease"> | Date | string
+    dateDiagnosis?: DateTimeFilter<"Disease"> | Date | string
     diseasePrague?: StringFilter<"Disease"> | string
     treatment?: StringFilter<"Disease"> | string
     observations?: StringNullableFilter<"Disease"> | string | null
@@ -10141,7 +10141,7 @@ export namespace Prisma {
   export type DiseaseOrderByWithRelationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateDiagnosis?: SortOrder
     diseasePrague?: SortOrder
     treatment?: SortOrder
     observations?: SortOrderInput | SortOrder
@@ -10154,7 +10154,7 @@ export namespace Prisma {
     OR?: DiseaseWhereInput[]
     NOT?: DiseaseWhereInput | DiseaseWhereInput[]
     beehiveId?: IntFilter<"Disease"> | number
-    data?: DateTimeFilter<"Disease"> | Date | string
+    dateDiagnosis?: DateTimeFilter<"Disease"> | Date | string
     diseasePrague?: StringFilter<"Disease"> | string
     treatment?: StringFilter<"Disease"> | string
     observations?: StringNullableFilter<"Disease"> | string | null
@@ -10164,7 +10164,7 @@ export namespace Prisma {
   export type DiseaseOrderByWithAggregationInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateDiagnosis?: SortOrder
     diseasePrague?: SortOrder
     treatment?: SortOrder
     observations?: SortOrderInput | SortOrder
@@ -10181,7 +10181,7 @@ export namespace Prisma {
     NOT?: DiseaseScalarWhereWithAggregatesInput | DiseaseScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Disease"> | number
     beehiveId?: IntWithAggregatesFilter<"Disease"> | number
-    data?: DateTimeWithAggregatesFilter<"Disease"> | Date | string
+    dateDiagnosis?: DateTimeWithAggregatesFilter<"Disease"> | Date | string
     diseasePrague?: StringWithAggregatesFilter<"Disease"> | string
     treatment?: StringWithAggregatesFilter<"Disease"> | string
     observations?: StringNullableWithAggregatesFilter<"Disease"> | string | null
@@ -10373,7 +10373,7 @@ export namespace Prisma {
   }
 
   export type ActivityCreateInput = {
-    data: Date | string
+    dateActivity: Date | string
     typeActivity: string
     descriptions: string
     observations?: string | null
@@ -10383,14 +10383,14 @@ export namespace Prisma {
   export type ActivityUncheckedCreateInput = {
     id?: number
     beehiveId: number
-    data: Date | string
+    dateActivity: Date | string
     typeActivity: string
     descriptions: string
     observations?: string | null
   }
 
   export type ActivityUpdateInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10400,7 +10400,7 @@ export namespace Prisma {
   export type ActivityUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10409,14 +10409,14 @@ export namespace Prisma {
   export type ActivityCreateManyInput = {
     id?: number
     beehiveId: number
-    data: Date | string
+    dateActivity: Date | string
     typeActivity: string
     descriptions: string
     observations?: string | null
   }
 
   export type ActivityUpdateManyMutationInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10425,7 +10425,7 @@ export namespace Prisma {
   export type ActivityUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10491,7 +10491,7 @@ export namespace Prisma {
   }
 
   export type TemperaturesHumidityCreateInput = {
-    data: Date | string
+    dateMeasurement: Date | string
     internalTemperature: Decimal | DecimalJsLike | number | string
     externalTemperature: Decimal | DecimalJsLike | number | string
     humidityInternal: Decimal | DecimalJsLike | number | string
@@ -10502,7 +10502,7 @@ export namespace Prisma {
   export type TemperaturesHumidityUncheckedCreateInput = {
     id?: number
     beehiveId: number
-    data: Date | string
+    dateMeasurement: Date | string
     internalTemperature: Decimal | DecimalJsLike | number | string
     externalTemperature: Decimal | DecimalJsLike | number | string
     humidityInternal: Decimal | DecimalJsLike | number | string
@@ -10510,7 +10510,7 @@ export namespace Prisma {
   }
 
   export type TemperaturesHumidityUpdateInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10521,7 +10521,7 @@ export namespace Prisma {
   export type TemperaturesHumidityUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10531,7 +10531,7 @@ export namespace Prisma {
   export type TemperaturesHumidityCreateManyInput = {
     id?: number
     beehiveId: number
-    data: Date | string
+    dateMeasurement: Date | string
     internalTemperature: Decimal | DecimalJsLike | number | string
     externalTemperature: Decimal | DecimalJsLike | number | string
     humidityInternal: Decimal | DecimalJsLike | number | string
@@ -10539,7 +10539,7 @@ export namespace Prisma {
   }
 
   export type TemperaturesHumidityUpdateManyMutationInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10549,7 +10549,7 @@ export namespace Prisma {
   export type TemperaturesHumidityUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10557,7 +10557,7 @@ export namespace Prisma {
   }
 
   export type FoodCreateInput = {
-    date: Date | string
+    dateFeeding: Date | string
     typeFood: string
     amount: Decimal | DecimalJsLike | number | string
     observations?: string | null
@@ -10567,14 +10567,14 @@ export namespace Prisma {
   export type FoodUncheckedCreateInput = {
     id?: number
     beehiveId: number
-    date: Date | string
+    dateFeeding: Date | string
     typeFood: string
     amount: Decimal | DecimalJsLike | number | string
     observations?: string | null
   }
 
   export type FoodUpdateInput = {
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10584,7 +10584,7 @@ export namespace Prisma {
   export type FoodUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10593,14 +10593,14 @@ export namespace Prisma {
   export type FoodCreateManyInput = {
     id?: number
     beehiveId: number
-    date: Date | string
+    dateFeeding: Date | string
     typeFood: string
     amount: Decimal | DecimalJsLike | number | string
     observations?: string | null
   }
 
   export type FoodUpdateManyMutationInput = {
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10609,14 +10609,14 @@ export namespace Prisma {
   export type FoodUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DiseaseCreateInput = {
-    data: Date | string
+    dateDiagnosis: Date | string
     diseasePrague: string
     treatment: string
     observations?: string | null
@@ -10626,14 +10626,14 @@ export namespace Prisma {
   export type DiseaseUncheckedCreateInput = {
     id?: number
     beehiveId: number
-    data: Date | string
+    dateDiagnosis: Date | string
     diseasePrague: string
     treatment: string
     observations?: string | null
   }
 
   export type DiseaseUpdateInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10643,7 +10643,7 @@ export namespace Prisma {
   export type DiseaseUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10652,14 +10652,14 @@ export namespace Prisma {
   export type DiseaseCreateManyInput = {
     id?: number
     beehiveId: number
-    data: Date | string
+    dateDiagnosis: Date | string
     diseasePrague: string
     treatment: string
     observations?: string | null
   }
 
   export type DiseaseUpdateManyMutationInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10668,7 +10668,7 @@ export namespace Prisma {
   export type DiseaseUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     beehiveId?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10991,7 +10991,7 @@ export namespace Prisma {
   export type ActivityCountOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateActivity?: SortOrder
     typeActivity?: SortOrder
     descriptions?: SortOrder
     observations?: SortOrder
@@ -11005,7 +11005,7 @@ export namespace Prisma {
   export type ActivityMaxOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateActivity?: SortOrder
     typeActivity?: SortOrder
     descriptions?: SortOrder
     observations?: SortOrder
@@ -11014,7 +11014,7 @@ export namespace Prisma {
   export type ActivityMinOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateActivity?: SortOrder
     typeActivity?: SortOrder
     descriptions?: SortOrder
     observations?: SortOrder
@@ -11094,7 +11094,7 @@ export namespace Prisma {
   export type TemperaturesHumidityCountOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateMeasurement?: SortOrder
     internalTemperature?: SortOrder
     externalTemperature?: SortOrder
     humidityInternal?: SortOrder
@@ -11113,7 +11113,7 @@ export namespace Prisma {
   export type TemperaturesHumidityMaxOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateMeasurement?: SortOrder
     internalTemperature?: SortOrder
     externalTemperature?: SortOrder
     humidityInternal?: SortOrder
@@ -11123,7 +11123,7 @@ export namespace Prisma {
   export type TemperaturesHumidityMinOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateMeasurement?: SortOrder
     internalTemperature?: SortOrder
     externalTemperature?: SortOrder
     humidityInternal?: SortOrder
@@ -11142,7 +11142,7 @@ export namespace Prisma {
   export type FoodCountOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    date?: SortOrder
+    dateFeeding?: SortOrder
     typeFood?: SortOrder
     amount?: SortOrder
     observations?: SortOrder
@@ -11157,7 +11157,7 @@ export namespace Prisma {
   export type FoodMaxOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    date?: SortOrder
+    dateFeeding?: SortOrder
     typeFood?: SortOrder
     amount?: SortOrder
     observations?: SortOrder
@@ -11166,7 +11166,7 @@ export namespace Prisma {
   export type FoodMinOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    date?: SortOrder
+    dateFeeding?: SortOrder
     typeFood?: SortOrder
     amount?: SortOrder
     observations?: SortOrder
@@ -11181,7 +11181,7 @@ export namespace Prisma {
   export type DiseaseCountOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateDiagnosis?: SortOrder
     diseasePrague?: SortOrder
     treatment?: SortOrder
     observations?: SortOrder
@@ -11195,7 +11195,7 @@ export namespace Prisma {
   export type DiseaseMaxOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateDiagnosis?: SortOrder
     diseasePrague?: SortOrder
     treatment?: SortOrder
     observations?: SortOrder
@@ -11204,7 +11204,7 @@ export namespace Prisma {
   export type DiseaseMinOrderByAggregateInput = {
     id?: SortOrder
     beehiveId?: SortOrder
-    data?: SortOrder
+    dateDiagnosis?: SortOrder
     diseasePrague?: SortOrder
     treatment?: SortOrder
     observations?: SortOrder
@@ -11866,7 +11866,7 @@ export namespace Prisma {
   }
 
   export type ActivityCreateWithoutBeehiveInput = {
-    data: Date | string
+    dateActivity: Date | string
     typeActivity: string
     descriptions: string
     observations?: string | null
@@ -11874,7 +11874,7 @@ export namespace Prisma {
 
   export type ActivityUncheckedCreateWithoutBeehiveInput = {
     id?: number
-    data: Date | string
+    dateActivity: Date | string
     typeActivity: string
     descriptions: string
     observations?: string | null
@@ -11914,7 +11914,7 @@ export namespace Prisma {
   }
 
   export type TemperaturesHumidityCreateWithoutBeehiveInput = {
-    data: Date | string
+    dateMeasurement: Date | string
     internalTemperature: Decimal | DecimalJsLike | number | string
     externalTemperature: Decimal | DecimalJsLike | number | string
     humidityInternal: Decimal | DecimalJsLike | number | string
@@ -11923,7 +11923,7 @@ export namespace Prisma {
 
   export type TemperaturesHumidityUncheckedCreateWithoutBeehiveInput = {
     id?: number
-    data: Date | string
+    dateMeasurement: Date | string
     internalTemperature: Decimal | DecimalJsLike | number | string
     externalTemperature: Decimal | DecimalJsLike | number | string
     humidityInternal: Decimal | DecimalJsLike | number | string
@@ -11940,7 +11940,7 @@ export namespace Prisma {
   }
 
   export type FoodCreateWithoutBeehiveInput = {
-    date: Date | string
+    dateFeeding: Date | string
     typeFood: string
     amount: Decimal | DecimalJsLike | number | string
     observations?: string | null
@@ -11948,7 +11948,7 @@ export namespace Prisma {
 
   export type FoodUncheckedCreateWithoutBeehiveInput = {
     id?: number
-    date: Date | string
+    dateFeeding: Date | string
     typeFood: string
     amount: Decimal | DecimalJsLike | number | string
     observations?: string | null
@@ -11964,7 +11964,7 @@ export namespace Prisma {
   }
 
   export type DiseaseCreateWithoutBeehiveInput = {
-    data: Date | string
+    dateDiagnosis: Date | string
     diseasePrague: string
     treatment: string
     observations?: string | null
@@ -11972,7 +11972,7 @@ export namespace Prisma {
 
   export type DiseaseUncheckedCreateWithoutBeehiveInput = {
     id?: number
-    data: Date | string
+    dateDiagnosis: Date | string
     diseasePrague: string
     treatment: string
     observations?: string | null
@@ -12043,7 +12043,7 @@ export namespace Prisma {
     NOT?: ActivityScalarWhereInput | ActivityScalarWhereInput[]
     id?: IntFilter<"Activity"> | number
     beehiveId?: IntFilter<"Activity"> | number
-    data?: DateTimeFilter<"Activity"> | Date | string
+    dateActivity?: DateTimeFilter<"Activity"> | Date | string
     typeActivity?: StringFilter<"Activity"> | string
     descriptions?: StringFilter<"Activity"> | string
     observations?: StringNullableFilter<"Activity"> | string | null
@@ -12099,7 +12099,7 @@ export namespace Prisma {
     NOT?: TemperaturesHumidityScalarWhereInput | TemperaturesHumidityScalarWhereInput[]
     id?: IntFilter<"TemperaturesHumidity"> | number
     beehiveId?: IntFilter<"TemperaturesHumidity"> | number
-    data?: DateTimeFilter<"TemperaturesHumidity"> | Date | string
+    dateMeasurement?: DateTimeFilter<"TemperaturesHumidity"> | Date | string
     internalTemperature?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFilter<"TemperaturesHumidity"> | Decimal | DecimalJsLike | number | string
@@ -12128,7 +12128,7 @@ export namespace Prisma {
     NOT?: FoodScalarWhereInput | FoodScalarWhereInput[]
     id?: IntFilter<"Food"> | number
     beehiveId?: IntFilter<"Food"> | number
-    date?: DateTimeFilter<"Food"> | Date | string
+    dateFeeding?: DateTimeFilter<"Food"> | Date | string
     typeFood?: StringFilter<"Food"> | string
     amount?: DecimalFilter<"Food"> | Decimal | DecimalJsLike | number | string
     observations?: StringNullableFilter<"Food"> | string | null
@@ -12156,7 +12156,7 @@ export namespace Prisma {
     NOT?: DiseaseScalarWhereInput | DiseaseScalarWhereInput[]
     id?: IntFilter<"Disease"> | number
     beehiveId?: IntFilter<"Disease"> | number
-    data?: DateTimeFilter<"Disease"> | Date | string
+    dateDiagnosis?: DateTimeFilter<"Disease"> | Date | string
     diseasePrague?: StringFilter<"Disease"> | string
     treatment?: StringFilter<"Disease"> | string
     observations?: StringNullableFilter<"Disease"> | string | null
@@ -12607,7 +12607,7 @@ export namespace Prisma {
 
   export type ActivityCreateManyBeehiveInput = {
     id?: number
-    data: Date | string
+    dateActivity: Date | string
     typeActivity: string
     descriptions: string
     observations?: string | null
@@ -12623,7 +12623,7 @@ export namespace Prisma {
 
   export type TemperaturesHumidityCreateManyBeehiveInput = {
     id?: number
-    data: Date | string
+    dateMeasurement: Date | string
     internalTemperature: Decimal | DecimalJsLike | number | string
     externalTemperature: Decimal | DecimalJsLike | number | string
     humidityInternal: Decimal | DecimalJsLike | number | string
@@ -12632,7 +12632,7 @@ export namespace Prisma {
 
   export type FoodCreateManyBeehiveInput = {
     id?: number
-    date: Date | string
+    dateFeeding: Date | string
     typeFood: string
     amount: Decimal | DecimalJsLike | number | string
     observations?: string | null
@@ -12640,14 +12640,14 @@ export namespace Prisma {
 
   export type DiseaseCreateManyBeehiveInput = {
     id?: number
-    data: Date | string
+    dateDiagnosis: Date | string
     diseasePrague: string
     treatment: string
     observations?: string | null
   }
 
   export type ActivityUpdateWithoutBeehiveInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12655,7 +12655,7 @@ export namespace Prisma {
 
   export type ActivityUncheckedUpdateWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12663,7 +12663,7 @@ export namespace Prisma {
 
   export type ActivityUncheckedUpdateManyWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateActivity?: DateTimeFieldUpdateOperationsInput | Date | string
     typeActivity?: StringFieldUpdateOperationsInput | string
     descriptions?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12693,7 +12693,7 @@ export namespace Prisma {
   }
 
   export type TemperaturesHumidityUpdateWithoutBeehiveInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -12702,7 +12702,7 @@ export namespace Prisma {
 
   export type TemperaturesHumidityUncheckedUpdateWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -12711,7 +12711,7 @@ export namespace Prisma {
 
   export type TemperaturesHumidityUncheckedUpdateManyWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateMeasurement?: DateTimeFieldUpdateOperationsInput | Date | string
     internalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     externalTemperature?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     humidityInternal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -12719,7 +12719,7 @@ export namespace Prisma {
   }
 
   export type FoodUpdateWithoutBeehiveInput = {
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12727,7 +12727,7 @@ export namespace Prisma {
 
   export type FoodUncheckedUpdateWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12735,14 +12735,14 @@ export namespace Prisma {
 
   export type FoodUncheckedUpdateManyWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateFeeding?: DateTimeFieldUpdateOperationsInput | Date | string
     typeFood?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DiseaseUpdateWithoutBeehiveInput = {
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12750,7 +12750,7 @@ export namespace Prisma {
 
   export type DiseaseUncheckedUpdateWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12758,7 +12758,7 @@ export namespace Prisma {
 
   export type DiseaseUncheckedUpdateManyWithoutBeehiveInput = {
     id?: IntFieldUpdateOperationsInput | number
-    data?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateDiagnosis?: DateTimeFieldUpdateOperationsInput | Date | string
     diseasePrague?: StringFieldUpdateOperationsInput | string
     treatment?: StringFieldUpdateOperationsInput | string
     observations?: NullableStringFieldUpdateOperationsInput | string | null

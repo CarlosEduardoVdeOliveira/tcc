@@ -7,6 +7,9 @@ const prisma = new PrismaClient();
 const getAllBeehives = async (_req, res) => {
   try {
     const beehives = await prisma.beehive.findMany();
+    if (beehives.length === 0) {
+      return res.status(404).json({ error: "Nenhuma colmeia encontrada." });
+    }
     res.json(beehives);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -54,7 +57,6 @@ const createBeehive = async (req, res) => {
         errors: error.errors,
       });
     }
-
     res.status(500).json({ status: "error", message: error.message });
   }
 };

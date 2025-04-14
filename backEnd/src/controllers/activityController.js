@@ -4,6 +4,9 @@ const prisma = new PrismaClient();
 const getAllActivities = async (_req, res) => {
   try {
     const activities = await prisma.activity.findMany();
+    if (!activities) {
+      return res.status(201).json("Não há atividades cadastradas.");
+    }
     res.json(activities);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -17,9 +20,8 @@ const getActivityById = async (req, res) => {
       where: { id: Number(id) },
       include: { beehive: true },
     });
-
-    if (!activity) {
-      return res.status(404).json({ error: "Atividade não encontrada" });
+    if (!activity || !id) {
+      return res.status(201).json({ error: "Atividade não encontrada" });
     }
 
     res.json(activity);
@@ -34,6 +36,12 @@ const getActivitiesByBeehiveId = async (req, res) => {
     const activities = await prisma.activity.findMany({
       where: { beehiveId: Number(beehiveId) },
     });
+    if (!beehiveId) {
+      return res.status(201).json({ error: "Colmeia não encontrada" });
+    }
+    if (activities.length === 0) {
+      return res.status(201).json({ error: "Não há atividades." });
+    }
     res.json(activities);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -58,6 +66,9 @@ const updateActivity = async (req, res) => {
       where: { id: Number(id) },
       data: req.body,
     });
+    if (!id || !activity) {
+      return res.status(201).json({ error: "Atividade não encontrada." });
+    }
     res.json(activity);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -70,6 +81,9 @@ const deleteActivity = async (req, res) => {
     await prisma.activity.delete({
       where: { id: Number(id) },
     });
+    if (!id) {
+      return res.status(201).json({ error: "Atividade não encontrada." });
+    }
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
