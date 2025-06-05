@@ -6,18 +6,20 @@ import diseaseSchema from "../schemas/DiseaseSchema.js";
 const router = express.Router();
 
 router.get("/", diseaseController.getAllDiseases);
-router.get("/:id", diseaseController.getAllDiseases);
+
+router.get(
+  "/beehive/:beehiveId",
+  diseaseController.getDiseaseByBeehiveId
+);
 
 router.post(
   "/",
   validate(diseaseSchema),
-
   diseaseController.createDisease
 );
 router.put(
   "/:id",
   validate(diseaseSchema),
-
   diseaseController.updateDisease
 );
 router.delete("/:id", diseaseController.deleteDisease);

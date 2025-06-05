@@ -6,12 +6,11 @@ import foodSchema from "../schemas/FoodSchema.js";
 const router = express.Router();
 
 router.get("/", foodController.getAllFoods);
-router.get("/:id", foodController.getFoodsByBeehiveId);
+router.get("/beehive/:beehiveId", foodController.getFoodsByBeehiveId);
 router.post("/", validate(foodSchema), foodController.createFood);
 router.put(
   "/:id",
   validate(foodSchema),
-
   foodController.updateFood
 );
 router.delete("/:id", foodController.deleteFood);

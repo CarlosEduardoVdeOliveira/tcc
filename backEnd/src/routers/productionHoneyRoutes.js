@@ -6,14 +6,9 @@ import productionHoneySchema from "../schemas/ProductionHoneySchema.js";
 const router = express.Router();
 
 router.get("/", productionHoneyController.getAllProductionsHoney);
+router.get("/:id", productionHoneyController.getProductionHoneyById);
 router.get(
-  "/:id",
-
-  productionHoneyController.getProductionHoneyById
-);
-router.get(
-  "/beehive/:id",
-
+  "/beehive/:beehiveId",
   productionHoneyController.getProductionsHoneyByBeehiveId
 );
 router.post(

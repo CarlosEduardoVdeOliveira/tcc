@@ -13,13 +13,13 @@ const getAllDiseases = async (_req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-const getDiseaseByBeehiveId = (req, res) => {
+const getDiseaseByBeehiveId = async (req, res) => {
   try {
     const { beehiveId } = req.params;
-    const diseaseBeehiveId = prisma.disease.findMany({
+    const diseaseBeehiveId = await prisma.disease.findMany({
       where: { beehiveId: Number(beehiveId) },
     });
-    req.json(diseaseBeehiveId);
+    res.json(diseaseBeehiveId);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

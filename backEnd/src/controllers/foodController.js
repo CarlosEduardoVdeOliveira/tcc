@@ -14,9 +14,9 @@ const getAllFoods = async (_req, res) => {
 };
 const getFoodsByBeehiveId = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { beehiveId } = req.params;
     const foods = await prisma.food.findMany({
-      where: { id: Number(id) },
+      where: { beehiveId: Number(beehiveId) },
     });
     res.json(foods);
   } catch (error) {

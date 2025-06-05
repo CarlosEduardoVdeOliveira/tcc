@@ -16,13 +16,12 @@ const getAllTemperatureHumidity = async (_req, res) => {
 
 const getTemperatureHumidityByBeehiveId = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!id) {
+    const { beehiveId } = req.params;
+    if (!beehiveId) {
       return res.json("Colmeia não encontrada.");
     }
     const temperatureHumidity = await prisma.temperaturesHumidity.findMany({
-      where: { id: Number(id) },
-      include: { beehive: true },
+      where: { beehiveId: Number(beehiveId) },
     });
     res.json(temperatureHumidity);
   } catch (error) {
