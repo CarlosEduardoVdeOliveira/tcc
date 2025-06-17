@@ -9,21 +9,26 @@ export function Header({ pathName }) {
   const url = location.pathname;
 
   return (
-    <header className="w-100% bg-yellow-500 p-4 flex justify-between items-center">
+    <header className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 flex justify-between items-center shadow-lg">
       {userToken && url !== "/" ? (
-        <Link to={pathName} title="Início">
-          <ArrowLeftIcon />{" "}
+        <Link 
+          to={pathName} 
+          title="Voltar"
+          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors duration-200"
+        >
+          <ArrowLeftIcon size={24} />
         </Link>
       ) : (
         <div></div>
       )}
+      
       {userToken && url !== "/perfil" ? (
         <Link
           to="/perfil"
           title="Meu perfil"
-          className="bg-gray-500 rounded-full flex items-center justify-center border border-yellow-600 text-yellow-600 w-[35px] h-[35px]"
+          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors duration-200"
         >
-          <User />
+          <User size={24} />
         </Link>
       ) : (
         <div></div>

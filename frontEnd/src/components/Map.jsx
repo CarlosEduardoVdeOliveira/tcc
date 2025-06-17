@@ -30,33 +30,62 @@ function LocationMarker({ onClick }) {
   return null;
 }
 
-export function Map({ onSelectLocation, ...props }) {
+export function Map({ onSelectLocation, latitude, longitude, ...props }) {
   const [markerPosition, setMarkerPosition] = useState(null);
   const [isLocationLoaded, setIsLocationLoaded] = useState(false);
+
   useEffect(() => {
-    if (!markerPosition) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          const coords = [latitude, longitude];
-          setMarkerPosition(coords);
-          setIsLocationLoaded(true);
+    // Se coordenadas foram passadas como props, use-as como posição inicial
+    if (latitude && longitude && !markerPosition) {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      
+      // Verifica se as coordenadas são válidas
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        const coords = [lat, lng];
+        setMarkerPosition(coords);
+        setIsLocationLoaded(true);
+        if (onSelectLocation) {
           onSelectLocation(coords);
-        },
-        (err) => {
-          console.error("Erro ao pegar localização do usuário:", err);
-          const fallback = [-19.55, -42.64];
-          setMarkerPosition(fallback);
-          setIsLocationLoaded(true);
+        }
+      } else {
+        console.warn('Coordenadas inválidas recebidas:', { latitude, longitude });
+        // Se as coordenadas são inválidas, use geolocalização
+        getCurrentLocation();
+      }
+    } else if (!markerPosition) {
+      // Se não há coordenadas iniciais, use geolocalização
+      getCurrentLocation();
+    }
+  }, [latitude, longitude, markerPosition, onSelectLocation]);
+
+  const getCurrentLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const coords = [latitude, longitude];
+        setMarkerPosition(coords);
+        setIsLocationLoaded(true);
+        if (onSelectLocation) {
+          onSelectLocation(coords);
+        }
+      },
+      (err) => {
+        console.error("Erro ao pegar localização do usuário:", err);
+        const fallback = [-19.55, -42.64];
+        setMarkerPosition(fallback);
+        setIsLocationLoaded(true);
+        if (onSelectLocation) {
           onSelectLocation(fallback);
         }
-      );
-    }
-  }, []);
+      }
+    );
+  };
 
   if (!isLocationLoaded) {
     return <p>Carregando mapa...</p>;
   }
+
   return (
     <MapContainer
       center={markerPosition}
@@ -75,7 +104,9 @@ export function Map({ onSelectLocation, ...props }) {
       <LocationMarker
         onClick={(coords) => {
           setMarkerPosition(coords);
-          onSelectLocation(coords);
+          if (onSelectLocation) {
+            onSelectLocation(coords);
+          }
         }}
       />
 

@@ -140,7 +140,7 @@ export function CreateAccount() {
             <label htmlFor="status">Status: </label>
             <select
               id="status"
-              {...register("status")}
+              value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
               <option value="">Seleciona o status</option>
@@ -160,7 +160,7 @@ export function CreateAccount() {
             <input
               id="date"
               type="date"
-              {...register("startDate")}
+              value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
             {errors.startDate && (

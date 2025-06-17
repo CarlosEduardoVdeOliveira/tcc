@@ -2,8 +2,8 @@ import React from "react";
 
 export function Footer() {
   return (
-    <div className="bg-yellow-500 font-semibold text-brown-500 w-full py-4 text-center">
-      &copy; Todos direitos reservados
-    </div>
+    <footer className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-medium w-full py-4 text-center shadow-lg">
+      <p>&copy; 2024 Sistema de Gestão de Colmeias. Todos os direitos reservados.</p>
+    </footer>
   );
 }

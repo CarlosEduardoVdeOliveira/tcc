@@ -2,26 +2,24 @@ import React from "react";
 
 export function GroupTextarea({ label, id, icon = null, ...props }) {
   return (
-    <div className="text-center g-1 flex flex-col">
-      <label htmlFor={id} className="block text-brown-500 font-semibold mb-4">
+    <div className="flex flex-col">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
-      <div className="relative flex items-center">
+      <div className="relative">
         <textarea
           resize="none"
           id={id}
-          className={`text-brown-500 p-2 w-full placeholder:text-gray-500 focus:outline-gray-500 
-            border-b-2 rounded border-gray-500 ${
-              icon ? "pl-8" : ""
-            }`}
+          className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 
+            focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-colors duration-200
+            min-h-[100px] ${icon ? "pl-10" : ""}`}
           {...props}
         />
-        <button
-          {...props}
-          className="absolute right-2 text-gray-500 cursor-pointer"
-        >
-          {icon && <span>{icon}</span>}
-        </button>
+        {icon && (
+          <div className="absolute top-2 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-400">{icon}</span>
+          </div>
+        )}
       </div>
     </div>
   );

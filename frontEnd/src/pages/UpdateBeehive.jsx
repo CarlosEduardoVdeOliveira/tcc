@@ -161,35 +161,30 @@ export function UpdateBeehive() {
           />
           <div className="flex justify-between items-center mx-4 my-8 gap-4">
             <div className="w-full flex flex-col">
-              <label htmlFor="status">Status: </label>
+              <label htmlFor="status" className="text-sm font-medium text-gray-700 mb-2">Status: </label>
               <select
                 id="status"
-                {...register("status")}
+                value={status}
                 onChange={(e) => setStatus(e.target.value)}
+                className="border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200 transition-colors duration-200"
               >
-                <option value="">Seleciona o status</option>
-                <option id="active" value="ativa">
-                  ativa
-                </option>
-                <option id="under_maintenance" value="em manutenção">
-                  em manutenção
-                </option>
-                <option id="abandoned" value="abandonada">
-                  abandonada
-                </option>
+                <option value="">Selecione o status</option>
+                <option id="active" value="ativa" className="text-green-600">Ativa</option>
+                <option id="under_maintenance" value="em manutenção" className="text-yellow-600">Em Manutenção</option>
+                <option id="abandoned" value="abandonada" className="text-gray-600">Abandonada</option>
               </select>
               {errors.status && (
                 <p className="text-xs text-red-500">{errors.status.message}</p>
               )}
             </div>
             <div className="w-full flex flex-col">
-              <label htmlFor="date">Data de inicio:</label>
+              <label htmlFor="date" className="text-sm font-medium text-gray-700 mb-2">Data de Início:</label>
               <input
                 id="date"
                 type="date"
-                {...register("startDate")}
-                value={startDate}
+                value={startDate ? startDate.substring(0, 10) : ""}
                 onChange={(e) => setStartDate(e.target.value)}
+                className="border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200 transition-colors duration-200"
               />
               {errors.startDate && (
                 <p className="text-red-500">{errors.startDate.message}</p>
@@ -198,6 +193,8 @@ export function UpdateBeehive() {
           </div>
           <div className="map">
             <Map
+              latitude={latitude}
+              longitude={longitude}
               onSelectLocation={(coords) => {
                 setLatitude(coords[0]);
                 setLongitude(coords[1]);

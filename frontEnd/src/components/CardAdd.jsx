@@ -4,13 +4,20 @@ import { Link } from "react-router-dom";
 
 export function CardAdd() {
   return (
-    <div
-      title="Adicionar colmeia."
-      className="bg-gray-500 flex p-1 w-[200px] h-[100px] items-center justify-center text-gray-50"
+    <Link 
+      to={"/cadastrar_colmeia"} 
+      className="bg-white border-2 border-dashed border-gray-300 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-yellow-400 hover:bg-yellow-50 flex items-center justify-center w-[200px] h-[100px] group"
+      title="Adicionar colmeia"
     >
-      <Link to={"/cadastrar_colmeia"} className="bg-gray-500 cursor-pointer">
-        <CirclePlusIcon />
-      </Link>
-    </div>
+      <div className="text-center">
+        <CirclePlusIcon 
+          size={32} 
+          className="text-gray-400 group-hover:text-yellow-500 transition-colors duration-200 mx-auto mb-2" 
+        />
+        <p className="text-sm font-medium text-gray-600 group-hover:text-yellow-600 transition-colors duration-200">
+          Adicionar Colmeia
+        </p>
+      </div>
+    </Link>
   );
 }
