@@ -1,6 +1,6 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import Feather from "react-native-vector-icons/Feather";
+import Icon from "react-native-vector-icons/Ionicons";
 
 function Header({ pathName }) {
   const navigation = useNavigation();
@@ -14,10 +14,10 @@ function Header({ pathName }) {
           onPress={() => navigation.navigate(pathName)}
           style={styles.iconButton}
         >
-          <Feather name="arrow-left" size={24} color="black" />
+          <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       ) : (
-        <View />
+        <View style={styles.placeholder} />
       )}
 
       {userToken && route.name !== "Perfil" ? (
@@ -25,10 +25,10 @@ function Header({ pathName }) {
           onPress={() => navigation.navigate("Perfil")}
           style={styles.profileButton}
         >
-          <Feather name="user" size={20} color="#facc15" />
+          <Icon name="person" size={24} color="#fff" />
         </TouchableOpacity>
       ) : (
-        <View />
+        <View style={styles.placeholder} />
       )}
     </View>
   );
@@ -36,24 +36,33 @@ function Header({ pathName }) {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: "#facc15", // yellow-500
-    padding: 16,
+    backgroundColor: "#eead2d",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   iconButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   profileButton: {
-    backgroundColor: "#6b7280", // gray-500
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#ca8a04", // yellow-600
-    width: 35,
-    height: 35,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  },
+  placeholder: {
+    width: 40,
   },
 });
 

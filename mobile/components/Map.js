@@ -3,17 +3,33 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
-function Map({ onSelectLocation }) {
+function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
   const [markerPosition, setMarkerPosition] = useState(null);
+  const [isLocationLoaded, setIsLocationLoaded] = useState(false);
 
   useEffect(() => {
+    // Se coordenadas foram passadas como props, use-as como posição inicial
+    if (latitude && longitude) {
+      const coords = { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
+      setMarkerPosition(coords);
+      setIsLocationLoaded(true);
+      if (onSelectLocation) {
+        onSelectLocation([coords.latitude, coords.longitude]);
+      }
+      return;
+    }
+
+    // Se não há coordenadas iniciais, use geolocalização
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         console.warn("Permissão de localização negada.");
         const fallback = { latitude: -19.55, longitude: -42.64 };
         setMarkerPosition(fallback);
-        onSelectLocation([fallback.latitude, fallback.longitude]);
+        setIsLocationLoaded(true);
+        if (onSelectLocation) {
+          onSelectLocation([fallback.latitude, fallback.longitude]);
+        }
         return;
       }
 
@@ -23,20 +39,24 @@ function Map({ onSelectLocation }) {
         longitude: location.coords.longitude,
       };
       setMarkerPosition(coords);
-      onSelectLocation([coords.latitude, coords.longitude]);
+      setIsLocationLoaded(true);
+      if (onSelectLocation) {
+        onSelectLocation([coords.latitude, coords.longitude]);
+      }
     })();
-  }, []);
+  }, [latitude, longitude, onSelectLocation]);
 
-  if (!markerPosition)
+  if (!isLocationLoaded) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Carregando mapa...</Text>
+      <View style={[styles.loadingContainer, style]}>
+        <Text style={styles.loadingText}>Carregando mapa...</Text>
       </View>
     );
+  }
 
   return (
     <MapView
-      style={styles.map}
+      style={[styles.map, style]}
       initialRegion={{
         ...markerPosition,
         latitudeDelta: 0.01,
@@ -45,8 +65,11 @@ function Map({ onSelectLocation }) {
       onPress={(e) => {
         const coords = e.nativeEvent.coordinate;
         setMarkerPosition(coords);
-        onSelectLocation([coords.latitude, coords.longitude]);
+        if (onSelectLocation) {
+          onSelectLocation([coords.latitude, coords.longitude]);
+        }
       }}
+      {...props}
     >
       <Marker coordinate={markerPosition} />
     </MapView>
@@ -56,12 +79,18 @@ function Map({ onSelectLocation }) {
 const styles = StyleSheet.create({
   map: {
     width: "100%",
-    height: 400,
+    height: 200,
   },
   loadingContainer: {
     justifyContent: "center",
     alignItems: "center",
-    height: 400,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 8,
+  },
+  loadingText: {
+    color: "#6b7280",
+    fontSize: 14,
   },
 });
+
 export default Map;

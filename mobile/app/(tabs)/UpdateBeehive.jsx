@@ -5,15 +5,20 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
-  Button,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  TouchableOpacity,
+  Modal,
+  Platform,
 } from "react-native";
 import { z } from "zod";
 import { getBeehive, updateBeehive } from "../../api/beehiveApi.js";
+import { Button } from "../../components/Button";
+import { Map } from "../../components/Map";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 // Esquema Zod
 const schema = z.object({
@@ -26,6 +31,13 @@ const schema = z.object({
   longitude: z.number().min(-180).max(180, "Longitude inválida"),
 });
 
+const statusOptions = [
+  { label: "Selecione o status", value: "" },
+  { label: "Ativa", value: "ativa" },
+  { label: "Em Manutenção", value: "em manutenção" },
+  { label: "Abandonada", value: "abandonada" },
+];
+
 function UpdateBeehive() {
   const route = useRoute();
   const { id } = route.params;
@@ -33,11 +45,15 @@ function UpdateBeehive() {
 
   const [loading, setLoading] = useState(true);
   const [producerId, setProducerId] = useState("");
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const {
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -51,6 +67,8 @@ function UpdateBeehive() {
       longitude: 0,
     },
   });
+
+  const watchedValues = watch();
 
   useEffect(() => {
     async function fetchBeehive() {
@@ -72,6 +90,10 @@ function UpdateBeehive() {
         setValue("status", data.status);
         setValue("latitude", data.latitude);
         setValue("longitude", data.longitude);
+
+        if (data.startDate) {
+          setSelectedDate(new Date(data.startDate));
+        }
       } catch (error) {
         console.error("Erro ao carregar colmeia:", error);
         Alert.alert("Erro", "Não foi possível carregar a colmeia.");
@@ -95,6 +117,7 @@ function UpdateBeehive() {
           },
         }
       );
+      Alert.alert("Sucesso", "Colmeia atualizada com sucesso!");
       navigation.navigate("BeehiveList");
     } catch (err) {
       console.error("Erro ao atualizar:", err);
@@ -102,159 +125,374 @@ function UpdateBeehive() {
     }
   };
 
-  if (loading) return <Text style={styles.loading}>Carregando colmeia...</Text>;
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      setValue("startDate", formattedDate);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "ativa":
+        return "#10B981";
+      case "em manutenção":
+        return "#F59E0B";
+      case "abandonada":
+        return "#6B7280";
+      default:
+        return "#6B7280";
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Carregando colmeia...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Atualizar Colmeia</Text>
-
-      <Controller
-        control={control}
-        name="name"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Nome"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
-
-      <Controller
-        control={control}
-        name="typeBeehive"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Tipo de Colmeia"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      {errors.typeBeehive && (
-        <Text style={styles.error}>{errors.typeBeehive.message}</Text>
-      )}
-
-      <Controller
-        control={control}
-        name="observations"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={[styles.input, styles.textarea]}
-            placeholder="Observações"
-            multiline
-            numberOfLines={4}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="status"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Status (ativa, em manutenção, abandonada)"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      {errors.status && (
-        <Text style={styles.error}>{errors.status.message}</Text>
-      )}
-
-      <Controller
-        control={control}
-        name="startDate"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Data de início (YYYY-MM-DD)"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      {errors.startDate && (
-        <Text style={styles.error}>{errors.startDate.message}</Text>
-      )}
-
-      {/* Localização (você pode integrar mapa aqui) */}
-      <Controller
-        control={control}
-        name="latitude"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Latitude"
-            value={String(value)}
-            onChangeText={(text) => onChange(Number(text))}
-            keyboardType="numeric"
-          />
-        )}
-      />
-      {errors.latitude && (
-        <Text style={styles.error}>{errors.latitude.message}</Text>
-      )}
-
-      <Controller
-        control={control}
-        name="longitude"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Longitude"
-            value={String(value)}
-            onChangeText={(text) => onChange(Number(text))}
-            keyboardType="numeric"
-          />
-        )}
-      />
-      {errors.longitude && (
-        <Text style={styles.error}>{errors.longitude.message}</Text>
-      )}
-
-      <View style={{ marginTop: 20 }}>
-        <Button title="Atualizar Colmeia" onPress={handleSubmit(onSubmit)} />
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Atualizar Colmeia</Text>
+        <Text style={styles.subtitle}>
+          Atualize as informações da sua colmeia
+        </Text>
       </View>
+
+      <View style={styles.form}>
+        {/* Nome */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome</Text>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite o nome da colmeia"
+                value={value}
+                onChangeText={onChange}
+                placeholderTextColor="#9CA3AF"
+              />
+            )}
+          />
+          {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+        </View>
+
+        {/* Tipo de Colmeia */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Tipo de Colmeia</Text>
+          <Controller
+            control={control}
+            name="typeBeehive"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite o tipo da colmeia"
+                value={value}
+                onChangeText={onChange}
+                placeholderTextColor="#9CA3AF"
+              />
+            )}
+          />
+          {errors.typeBeehive && (
+            <Text style={styles.error}>{errors.typeBeehive.message}</Text>
+          )}
+        </View>
+
+        {/* Observações */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Observações</Text>
+          <Controller
+            control={control}
+            name="observations"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={[styles.input, styles.textarea]}
+                placeholder="Digite observações sobre a colmeia"
+                multiline
+                numberOfLines={4}
+                value={value}
+                onChangeText={onChange}
+                placeholderTextColor="#9CA3AF"
+                textAlignVertical="top"
+              />
+            )}
+          />
+        </View>
+
+        {/* Status e Data */}
+        <View style={styles.row}>
+          {/* Status */}
+          <View style={[styles.inputGroup, styles.halfWidth]}>
+            <Text style={styles.label}>Status</Text>
+            <TouchableOpacity
+              style={styles.selectInput}
+              onPress={() => setShowStatusModal(true)}
+            >
+              <Text style={[
+                styles.selectText,
+                { color: watchedValues.status ? getStatusColor(watchedValues.status) : "#9CA3AF" }
+              ]}>
+                {watchedValues.status || "Selecione o status"}
+              </Text>
+            </TouchableOpacity>
+            {errors.status && (
+              <Text style={styles.error}>{errors.status.message}</Text>
+            )}
+          </View>
+
+          {/* Data de Início */}
+          <View style={[styles.inputGroup, styles.halfWidth]}>
+            <Text style={styles.label}>Data de Início</Text>
+            <TouchableOpacity
+              style={styles.selectInput}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={[
+                styles.selectText,
+                { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
+              ]}>
+                {watchedValues.startDate || "Selecione a data"}
+              </Text>
+            </TouchableOpacity>
+            {errors.startDate && (
+              <Text style={styles.error}>{errors.startDate.message}</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Mapa */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Localização</Text>
+          <View style={styles.mapContainer}>
+            <Map
+              latitude={watchedValues.latitude}
+              longitude={watchedValues.longitude}
+              onSelectLocation={(coords) => {
+                setValue("latitude", coords[0]);
+                setValue("longitude", coords[1]);
+              }}
+            />
+          </View>
+        </View>
+
+        {/* Botão */}
+        <Button
+          title="Atualizar Colmeia"
+          onPress={handleSubmit(onSubmit)}
+          style={styles.submitButton}
+        />
+      </View>
+
+      {/* Modal de Status */}
+      <Modal
+        visible={showStatusModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowStatusModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecione o Status</Text>
+            {statusOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={styles.modalOption}
+                onPress={() => {
+                  setValue("status", option.value);
+                  setShowStatusModal(false);
+                }}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  { color: option.value ? getStatusColor(option.value) : "#374151" }
+                ]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowStatusModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={handleDateChange}
+        />
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
-    backgroundColor: "#fff",
+    flex: 1,
+    backgroundColor: "#F9FAFB",
   },
-  loading: {
-    marginTop: 50,
-    textAlign: "center",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#6B7280",
+  },
+  header: {
+    padding: 24,
+    paddingBottom: 16,
   },
   title: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "bold",
+    color: "#111827",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  form: {
+    padding: 24,
+    paddingTop: 0,
+  },
+  inputGroup: {
     marginBottom: 20,
   },
+  halfWidth: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: "#111827",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   textarea: {
-    height: 80,
+    height: 100,
+    textAlignVertical: "top",
+  },
+  selectInput: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  selectText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  mapContainer: {
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   error: {
-    color: "red",
-    marginBottom: 10,
+    color: "#EF4444",
     fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  submitButton: {
+    marginTop: 32,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111827",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalOption: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  modalOptionText: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  modalCancel: {
+    marginTop: 20,
+    paddingVertical: 16,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6B7280",
+    textAlign: "center",
   },
 });
+
 export default UpdateBeehive;
