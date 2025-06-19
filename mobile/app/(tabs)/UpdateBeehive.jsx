@@ -1,24 +1,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  TouchableOpacity,
-  Modal,
-  Platform,
+    Alert,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { z } from "zod";
 import { getBeehive, updateBeehive } from "../../api/beehiveApi.js";
-import { Button } from "../../components/Button";
+import Button from "../../components/Button.js";
 import { Map } from "../../components/Map";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 // Esquema Zod
 const schema = z.object({
@@ -39,11 +39,11 @@ const statusOptions = [
 ];
 
 function UpdateBeehive() {
-  const route = useRoute();
-  const { id } = route.params;
-  const navigation = useNavigation();
+  const router = useRouter();
+  const { id } = useLocalSearchParams();
 
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [producerId, setProducerId] = useState("");
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -106,9 +106,10 @@ function UpdateBeehive() {
   }, [id]);
 
   const onSubmit = async (data) => {
+    setSaving(true);
     try {
       const token = await AsyncStorage.getItem("user_token");
-      await updateBeehive(
+      const result = await updateBeehive(
         id,
         { ...data, producerId },
         {
@@ -117,9 +118,15 @@ function UpdateBeehive() {
           },
         }
       );
+      setSaving(false);
+      if (result?.error) {
+        Alert.alert("Erro", result.message || "Não foi possível atualizar a colmeia.");
+        return;
+      }
       Alert.alert("Sucesso", "Colmeia atualizada com sucesso!");
-      navigation.navigate("BeehiveList");
+      router.replace('/(tabs)/Beehives');
     } catch (err) {
+      setSaving(false);
       console.error("Erro ao atualizar:", err);
       Alert.alert("Erro", "Não foi possível atualizar a colmeia.");
     }
@@ -284,9 +291,11 @@ function UpdateBeehive() {
 
         {/* Botão */}
         <Button
-          title="Atualizar Colmeia"
+          title="Salvar Alterações"
           onPress={handleSubmit(onSubmit)}
-          style={styles.submitButton}
+          style={styles.button}
+          loading={saving}
+          disabled={saving}
         />
       </View>
 
@@ -449,7 +458,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 4,
   },
-  submitButton: {
+  button: {
     marginTop: 32,
   },
   modalOverlay: {

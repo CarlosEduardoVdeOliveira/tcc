@@ -1,13 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from "react";
-import { 
-  Alert, 
-  ScrollView, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  StyleSheet 
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -16,12 +16,12 @@ import { deleteBeehive, getBeehive } from "../../api/beehiveApi.js";
 import { deleteDisease, getDisease } from "../../api/diseaseApi.js";
 import { deleteFood, getFood } from "../../api/foodApi.js";
 import {
-  deleteProductionHoney,
-  getProductionHoney,
+    deleteProductionHoney,
+    getProductionHoney,
 } from "../../api/productionHoneyApi.js";
 import {
-  deleteTemperatureHumidity,
-  getTemperatureHumidity,
+    deleteTemperatureHumidity,
+    getTemperatureHumidity,
 } from "../../api/temperatureHumidity.js";
 
 import Footer from "../../components/Footer.js";
@@ -31,17 +31,17 @@ import FormFood from "../../components/FormFood.js";
 import FormProductionHoney from "../../components/FormProductionHoney.js";
 import FormTemperatureHumidity from "../../components/FormTemperatureHumidity.js";
 import Header from "../../components/Header.js";
-import Modal from "../../components/Modal.js";
 import { Map } from "../../components/Map.js";
+import Modal from "../../components/Modal.js";
 import { formatDate } from "../../utils/formatDate.js";
 
 function BeehiveDetails() {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { id } = route.params;
+  const router = useRouter();
+  const { id } = useLocalSearchParams();
 
   const [beehive, setBeehive] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [openModal, setOpenModal] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -55,7 +55,7 @@ function BeehiveDetails() {
     async function fetchData() {
       const user_token = await AsyncStorage.getItem("user_token");
       if (!user_token) {
-        navigation.navigate("Login");
+        router.replace("/Login");
         return;
       }
 
@@ -105,22 +105,27 @@ function BeehiveDetails() {
         setTemperatureHumidities(sortedTemperatureHumidities);
       } catch (error) {
         console.error("Erro ao carregar colmeia:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados da colmeia. Tente novamente mais tarde.");
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [id, navigation]);
+  }, [id, router]);
 
   const handleDelete = async (itemId, deleteFunc) => {
+    setActionLoading(true);
     try {
       await deleteFunc(itemId);
-      // Recarregar dados
       setLoading(true);
       setBeehive(null);
+      Alert.alert("Sucesso", "Item deletado com sucesso!");
     } catch (error) {
       console.error("Erro ao deletar:", error);
+      Alert.alert("Erro", "Não foi possível deletar o item. Tente novamente.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -232,7 +237,7 @@ function BeehiveDetails() {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => navigation.navigate("AtualizarColmeia", { id })}
+            onPress={() => router.push("AtualizarColmeia", { id })}
           >
             <Icon name="pencil" size={16} color="#fff" />
             <Text style={styles.editButtonText}>Editar</Text>

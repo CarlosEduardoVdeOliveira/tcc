@@ -1,17 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Platform,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -30,25 +30,31 @@ const schema = z.object({
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
   startDate: z.string().min(1, "Selecione a data de início."),
   status: z.string().min(1, "Selecione um status"),
-  latitude: z.number().min(2, "Localização inválida"),
-  longitude: z.number().min(2, "Localização inválida"),
+  latitude: z
+    .number()
+    .refine((val) => val >= -90 && val <= 90, "Latitude inválida"),
+  longitude: z
+    .number()
+    .refine((val) => val >= -180 && val <= 180, "Longitude inválida"),
   cpfCnpj: z.string().refine(isValidCpfCnpj, "CPF ou CNPJ inválido"),
 });
 
 function CreateAccount() {
   const [viewPassword, setViewPassword] = useState(true);
-  const [coords, setCoords] = useState({ latitude: -15.7801, longitude: -47.9292 });
+  const [coords, setCoords] = useState({
+    latitude: -15.7801,
+    longitude: -47.9292,
+  });
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigation = useNavigation();
 
   const {
-    register,
+    control,
     handleSubmit,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -57,33 +63,31 @@ function CreateAccount() {
       password: "",
       startDate: "",
       status: "",
-      latitude: -15.7801,
-      longitude: -47.9292,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
       cpfCnpj: "",
     },
   });
 
   const onSubmit = async (data) => {
-    try {
-      await createUser(data);
-      Alert.alert("Sucesso", "Conta criada com sucesso");
-      navigation.navigate("Login");
-    } catch (err) {
-      console.error("Erro ao criar conta:", err);
-      Alert.alert("Erro", "Falha ao criar conta");
+    const result = await createUser(data);
+    if (result.error) {
+      Alert.alert("Erro", result.message);
+      return;
     }
+    Alert.alert("Sucesso", "Conta criada com sucesso");
+    navigation.navigate("Login");
   };
 
   const handleMapPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setCoords({ latitude, longitude });
-    setValue("latitude", latitude);
-    setValue("longitude", longitude);
+    setValue("latitude", latitude, { shouldValidate: true });
+    setValue("longitude", longitude, { shouldValidate: true });
   };
 
   const handleStatusSelect = (status) => {
-    setSelectedStatus(status);
-    setValue("status", status);
+    setValue("status", status, { shouldValidate: true });
     setShowStatusPicker(false);
   };
 
@@ -91,13 +95,13 @@ function CreateAccount() {
     setShowDatePicker(false);
     if (date) {
       setSelectedDate(date);
-      const formattedDate = date.toISOString().split('T')[0];
-      setValue("startDate", formattedDate);
+      const formattedDate = date.toISOString().split("T")[0];
+      setValue("startDate", formattedDate, { shouldValidate: true });
     }
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   return (
@@ -114,10 +118,17 @@ function CreateAccount() {
         {/* Nome */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Nome</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu nome"
-            onChangeText={(text) => setValue("name", text)}
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite seu nome"
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
           {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
         </View>
@@ -125,12 +136,19 @@ function CreateAccount() {
         {/* Email */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>E-mail</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            onChangeText={(text) => setValue("email", text)}
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite seu email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
           {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
         </View>
@@ -138,10 +156,17 @@ function CreateAccount() {
         {/* CPF/CNPJ */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>CPF/CNPJ</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu CPF ou CNPJ"
-            onChangeText={(text) => setValue("cpfCnpj", text)}
+          <Controller
+            control={control}
+            name="cpfCnpj"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite seu CPF ou CNPJ"
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
           {errors.cpfCnpj && (
             <Text style={styles.error}>{errors.cpfCnpj.message}</Text>
@@ -151,24 +176,27 @@ function CreateAccount() {
         {/* Senha */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Senha</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Digite uma senha"
-              secureTextEntry={viewPassword}
-              onChangeText={(text) => setValue("password", text)}
-            />
-            <TouchableOpacity 
-              style={styles.eyeButton}
-              onPress={() => setViewPassword(!viewPassword)}
-            >
-              <Icon 
-                name={viewPassword ? "eye-off" : "eye"} 
-                size={24} 
-                color="#666"
-              />
-            </TouchableOpacity>
-          </View>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Digite uma senha"
+                  secureTextEntry={viewPassword}
+                  onChangeText={onChange}
+                  value={value}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setViewPassword(!viewPassword)}
+                >
+                  <Icon name={viewPassword ? "eye-off" : "eye"} size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
           {errors.password && (
             <Text style={styles.error}>{errors.password.message}</Text>
           )}
@@ -179,35 +207,53 @@ function CreateAccount() {
           {/* Status */}
           <View style={styles.halfWidth}>
             <Text style={styles.label}>Status</Text>
-            <TouchableOpacity 
-              style={styles.selectInput}
-              onPress={() => setShowStatusPicker(true)}
-            >
-              <Text style={selectedStatus ? styles.selectText : styles.placeholderText}>
-                {selectedStatus || "Selecione o status"}
-              </Text>
-              <Icon name="chevron-down" size={20} color="#666" />
-            </TouchableOpacity>
-            {errors.status && (
-              <Text style={styles.error}>{errors.status.message}</Text>
-            )}
+            <Controller
+              control={control}
+              name="status"
+              render={({ field: { value } }) => (
+                <>
+                  <TouchableOpacity
+                    style={styles.selectInput}
+                    onPress={() => setShowStatusPicker(true)}
+                  >
+                    <Text style={value ? styles.selectText : styles.placeholderText}>
+                      {value || "Selecione o status"}
+                    </Text>
+                    <Icon name="chevron-down" size={20} color="#666" />
+                  </TouchableOpacity>
+                  {errors.status && (
+                    <Text style={styles.error}>{errors.status.message}</Text>
+                  )}
+                </>
+              )}
+            />
           </View>
 
           {/* Data */}
           <View style={styles.halfWidth}>
             <Text style={styles.label}>Data de início</Text>
-            <TouchableOpacity 
-              style={styles.selectInput}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={styles.selectText}>
-                {formatDate(selectedDate)}
-              </Text>
-              <Icon name="calendar" size={20} color="#666" />
-            </TouchableOpacity>
-            {errors.startDate && (
-              <Text style={styles.error}>{errors.startDate.message}</Text>
-            )}
+            <Controller
+              control={control}
+              name="startDate"
+              render={({ field: { value } }) => (
+                <>
+                  <TouchableOpacity
+                    style={styles.selectInput}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Text style={styles.selectText}>
+                      {value
+                        ? new Date(value).toLocaleDateString("pt-BR")
+                        : formatDate(selectedDate)}
+                    </Text>
+                    <Icon name="calendar" size={20} color="#666" />
+                  </TouchableOpacity>
+                  {errors.startDate && (
+                    <Text style={styles.error}>{errors.startDate.message}</Text>
+                  )}
+                </>
+              )}
+            />
           </View>
         </View>
 
@@ -235,10 +281,10 @@ function CreateAccount() {
         </View>
 
         {/* Botão Cadastrar */}
-        <Button title="Cadastrar" onPress={handleSubmit(onSubmit)} />
+        <Button title="Cadastrar" onPress={handleSubmit(onSubmit)} loading={isSubmitting} />
 
         {/* Link para Login */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.loginLinkContainer}
           onPress={() => navigation.navigate("Login")}
         >
@@ -253,19 +299,19 @@ function CreateAccount() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Selecione o Status</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Ativo")}
             >
               <Text style={styles.modalOptionText}>Ativo</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Inativo")}
             >
               <Text style={styles.modalOptionText}>Inativo</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalCancel}
               onPress={() => setShowStatusPicker(false)}
             >
@@ -280,7 +326,7 @@ function CreateAccount() {
         <DateTimePicker
           value={selectedDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
           maximumDate={new Date()}
         />

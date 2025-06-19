@@ -1,82 +1,96 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
-import { 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  ScrollView 
+import { useRouter } from 'expo-router';
+import { useContext, useEffect, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
-
-import { getUser } from "../../api/userApi.js";
-import Header from "../../components/Header.js";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Container from "../../components/Container.js";
 import Footer from "../../components/Footer.js";
+import Header from "../../components/Header.js";
+import Loading from "../../components/Loading.js";
+import Map from "../../components/Map.js";
+import { AuthContext } from "../../contexts/auth.js";
+import { getUser } from "../../api/userApi.js";
 import { formatDate } from "../../utils/formatDate.js";
+import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
-function Profile() {
+export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
+  const { signout } = useContext(AuthContext);
+  const router = useRouter();
 
   useEffect(() => {
     const loadUser = async () => {
       try {
+        setLoading(true);
         const userData = await AsyncStorage.getItem("user");
-        const userToken = await AsyncStorage.getItem("user_token");
+        const token = await AsyncStorage.getItem("user_token");
 
-        if (!userData || !userToken) {
-          navigation.navigate("Login");
+        if (!userData || !token) {
+          router.replace('/Login');
           return;
         }
 
-        const parsedUser = JSON.parse(userData);
-        const id = parsedUser.id;
-
-        const response = await getUser(id);
-        setUser(response.data);
+        const user = await getUser();
+        console.log("✅ Dados do usuário carregados:", user);
+        setUser(user);
       } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
+        console.error("❌ Erro ao buscar usuário:", error);
+        
+        if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+          Alert.alert(
+            "Erro de Conexão",
+            "Não foi possível conectar ao servidor. Verifique se o backend está rodando.",
+            [
+              { text: "OK" },
+              { text: "Tentar Novamente", onPress: loadUser }
+            ]
+          );
+        } else {
+          Alert.alert("Erro", "Erro ao carregar perfil. Tente novamente.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadUser();
-  }, [navigation]);
+  }, [router]);
 
-  const logOut = async () => {
-    await AsyncStorage.removeItem("user_token");
-    await AsyncStorage.removeItem("user");
-    navigation.navigate("Login");
-  };
-
-  const updateProfile = () => {
-    if (!user?.id) return;
-    navigation.navigate("UpdateProfile", { id: user.id });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'ativo':
-      case 'active':
-        return { backgroundColor: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' };
-      case 'inativo':
-      case 'inactive':
-        return { backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fecaca' };
-      default:
-        return { backgroundColor: '#f3f4f6', color: '#374151', borderColor: '#d1d5db' };
-    }
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sair",
+      "Tem certeza que deseja sair?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: () => {
+            signout();
+            router.replace('/');
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Carregando perfil...</Text>
-        </View>
+        <Header />
+        <Loading />
+        <Footer />
       </View>
     );
   }
@@ -84,15 +98,15 @@ function Profile() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
+        <Header />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Erro ao carregar perfil</Text>
         </View>
+        <Footer />
       </View>
     );
   }
 
-  const statusStyle = getStatusColor(user.status);
   const totalBeehives = user?.beehives?.length || 0;
   const activeBeehives = user?.beehives?.filter(beehive => 
     beehive.status?.toLowerCase() === 'ativo' || 
@@ -109,167 +123,199 @@ function Profile() {
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" />
-      
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Cabeçalho do Perfil */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileInfo}>
-            <View style={styles.avatarContainer}>
-              <Icon name="person" size={32} color="#fff" />
+      <Header />
+      <Container>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            {/* Cabeçalho do Perfil */}
+            <View style={styles.profileHeader}>
+              <View style={styles.headerContent}>
+                <View style={styles.avatarContainer}>
+                  <Feather name="user" size={32} color="#fff" />
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{user?.name || "Usuário"}</Text>
+                  <Text style={styles.userEmail}>{user?.email || "email@exemplo.com"}</Text>
+                </View>
+              </View>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => router.push('/(tabs)/UpdateProfile')}
+                >
+                  <Feather name="edit-2" size={18} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.editButtonText}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.signOutButton}
+                  onPress={handleSignOut}
+                >
+                  <Feather name="log-out" size={18} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.signOutButtonText}>Sair</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userEmail}>{user.email}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={styles.editProfileButton}
-              onPress={updateProfile}
-            >
-              <Icon name="pencil" size={16} color="#fff" />
-              <Text style={styles.editProfileText}>Editar Perfil</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={logOut}
-            >
-              <Icon name="log-out" size={16} color="#fff" />
-              <Text style={styles.logoutText}>Sair</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Informações do Usuário */}
-        <View style={styles.infoGrid}>
-          {/* Card de Informações Pessoais */}
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeader}>
-              <Icon name="person" size={20} color="#eead2d" />
-              <Text style={styles.cardTitle}>Informações Pessoais</Text>
-            </View>
-            
-            <View style={styles.infoList}>
-              <View style={styles.infoItem}>
-                <Icon name="mail" size={16} color="#6b7280" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{user.email}</Text>
+            {/* Grid de Informações */}
+            <View style={styles.gridContainer}>
+              {/* Card de Informações Pessoais */}
+              <View style={styles.infoCard}>
+                <View style={styles.cardHeader}>
+                  <Feather name="user" size={20} color="#f59e0b" style={styles.cardIcon} />
+                  <Text style={styles.cardTitle}>Informações Pessoais</Text>
                 </View>
-              </View>
-              
-              <View style={styles.infoItem}>
-                <Icon name="card" size={16} color="#6b7280" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>CPF/CNPJ</Text>
-                  <Text style={styles.infoValue}>{user.cpfCnpj}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.infoItem}>
-                <Icon name="calendar" size={16} color="#6b7280" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Data de Início</Text>
-                  <Text style={styles.infoValue}>
-                    {user.startDate ? formatDate(user.startDate) : "Não informado"}
-                  </Text>
-                </View>
-              </View>
-              
-              <View style={styles.infoItem}>
-                <View style={[styles.statusDot, { backgroundColor: user.status === 'Ativo' ? '#10b981' : '#ef4444' }]} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={[styles.infoValue, { color: user.status === 'Ativo' ? '#10b981' : '#ef4444' }]}>
-                    {user.status}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Card de Estatísticas */}
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeader}>
-              <Icon name="home" size={20} color="#eead2d" />
-              <Text style={styles.cardTitle}>Estatísticas das Colmeias</Text>
-            </View>
-            
-            <View style={styles.statsContainer}>
-              {/* Total de Colmeias */}
-              <View style={styles.totalStatsCard}>
-                <View style={styles.totalStatsContent}>
-                  <View>
-                    <Text style={styles.totalStatsLabel}>Total de Colmeias</Text>
-                    <Text style={styles.totalStatsValue}>{totalBeehives}</Text>
+                <View style={styles.infoList}>
+                  <View style={styles.infoItem}>
+                    <Feather name="mail" size={16} color="#6b7280" style={styles.infoIcon} />
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>Email</Text>
+                      <Text style={styles.infoValue}>{user?.email || "Não informado"}</Text>
+                    </View>
                   </View>
-                  <Icon name="home" size={32} color="#eead2d" />
+                  <View style={styles.infoItem}>
+                    <Feather name="hash" size={16} color="#6b7280" style={styles.infoIcon} />
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>CPF/CNPJ</Text>
+                      <Text style={styles.infoValue}>{user?.cpfCnpj || "Não informado"}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Feather name="calendar" size={16} color="#6b7280" style={styles.infoIcon} />
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>Data de Início</Text>
+                      <Text style={styles.infoValue}>
+                        {user?.startDate ? formatDate(user.startDate) : "Não informado"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Feather name="check-circle" size={16} color={user?.status === 'Ativo' ? '#10b981' : '#ef4444'} style={styles.infoIcon} />
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>Status</Text>
+                      <Text style={[styles.infoValue, { color: user?.status === 'Ativo' ? '#10b981' : '#ef4444' }]}>
+                        {user?.status || "Ativo"}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </View>
 
-              {/* Status das Colmeias */}
-              <View style={styles.statusStatsContainer}>
-                <Text style={styles.statusStatsTitle}>Status das Colmeias:</Text>
+              {/* Card de Estatísticas */}
+              <View style={styles.infoCard}>
+                <View style={styles.cardHeader}>
+                  <Feather name="bar-chart-2" size={20} color="#f59e0b" style={styles.cardIcon} />
+                  <Text style={styles.cardTitle}>Estatísticas das Colmeias</Text>
+                </View>
                 
-                {/* Colmeias Ativas */}
-                <View style={styles.statusStatsCard}>
-                  <View style={styles.statusStatsContent}>
-                    <View style={styles.statusStatsInfo}>
-                      <View style={[styles.statusDot, { backgroundColor: '#10b981' }]} />
-                      <View>
-                        <Text style={styles.statusStatsLabel}>Ativas</Text>
-                        <Text style={styles.statusStatsValue}>{activeBeehives}</Text>
-                      </View>
+                {/* Total de Colmeias */}
+                <View style={styles.totalCard}>
+                  <View style={styles.totalContent}>
+                    <View>
+                      <Text style={styles.totalLabel}>Total de Colmeias</Text>
+                      <Text style={styles.totalValue}>{totalBeehives}</Text>
                     </View>
-                    <Text style={styles.statusStatsPercentage}>
-                      {totalBeehives > 0 ? `${Math.round((activeBeehives / totalBeehives) * 100)}%` : '0%'}
-                    </Text>
+                    <Feather name="home" size={32} color="#f59e0b" style={styles.totalIcon} />
                   </View>
                 </View>
 
-                {/* Colmeias em Manutenção */}
-                <View style={styles.statusStatsCard}>
-                  <View style={styles.statusStatsContent}>
-                    <View style={styles.statusStatsInfo}>
-                      <View style={[styles.statusDot, { backgroundColor: '#f59e0b' }]} />
-                      <View>
-                        <Text style={styles.statusStatsLabel}>Em Manutenção</Text>
-                        <Text style={styles.statusStatsValue}>{maintenanceBeehives}</Text>
+                {/* Status das Colmeias */}
+                <View style={styles.statusSection}>
+                  <Text style={styles.statusTitle}>Status das Colmeias:</Text>
+                  
+                  {/* Colmeias Ativas */}
+                  <View style={styles.statusCard}>
+                    <View style={styles.statusContent}>
+                      <View style={styles.statusInfo}>
+                        <Feather name="check-circle" size={16} color="#10b981" style={styles.statusDot} />
+                        <View>
+                          <Text style={styles.statusLabel}>Ativas</Text>
+                          <Text style={styles.statusValue}>{activeBeehives}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.statusPercentage}>
+                        {totalBeehives > 0 ? `${Math.round((activeBeehives / totalBeehives) * 100)}%` : '0%'}
+                      </Text>
                     </View>
-                    <Text style={styles.statusStatsPercentage}>
-                      {totalBeehives > 0 ? `${Math.round((maintenanceBeehives / totalBeehives) * 100)}%` : '0%'}
-                    </Text>
                   </View>
-                </View>
 
-                {/* Colmeias Abandonadas */}
-                <View style={styles.statusStatsCard}>
-                  <View style={styles.statusStatsContent}>
-                    <View style={styles.statusStatsInfo}>
-                      <View style={[styles.statusDot, { backgroundColor: '#6b7280' }]} />
-                      <View>
-                        <Text style={styles.statusStatsLabel}>Abandonadas</Text>
-                        <Text style={styles.statusStatsValue}>{abandonedBeehives}</Text>
+                  {/* Colmeias em Manutenção */}
+                  <View style={styles.statusCard}>
+                    <View style={styles.statusContent}>
+                      <View style={styles.statusInfo}>
+                        <MaterialCommunityIcons name="tools" size={16} color="#f59e0b" style={styles.statusDot} />
+                        <View>
+                          <Text style={styles.statusLabel}>Em Manutenção</Text>
+                          <Text style={styles.statusValue}>{maintenanceBeehives}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.statusPercentage}>
+                        {totalBeehives > 0 ? `${Math.round((maintenanceBeehives / totalBeehives) * 100)}%` : '0%'}
+                      </Text>
                     </View>
-                    <Text style={styles.statusStatsPercentage}>
-                      {totalBeehives > 0 ? `${Math.round((abandonedBeehives / totalBeehives) * 100)}%` : '0%'}
-                    </Text>
+                  </View>
+
+                  {/* Colmeias Abandonadas */}
+                  <View style={styles.statusCard}>
+                    <View style={styles.statusContent}>
+                      <View style={styles.statusInfo}>
+                        <Ionicons name="close-circle-outline" size={16} color="#6b7280" style={styles.statusDot} />
+                        <View>
+                          <Text style={styles.statusLabel}>Abandonadas</Text>
+                          <Text style={styles.statusValue}>{abandonedBeehives}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.statusPercentage}>
+                        {totalBeehives > 0 ? `${Math.round((abandonedBeehives / totalBeehives) * 100)}%` : '0%'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
             </View>
+
+            {/* Mapa da Localização */}
+            <View style={styles.mapCard}>
+              <View style={styles.cardHeader}>
+                <Feather name="map-pin" size={20} color="#f59e0b" style={styles.cardIcon} />
+                <Text style={styles.cardTitle}>Localização</Text>
+              </View>
+              <View style={styles.mapContainer}>
+                <Map
+                  latitude={user?.latitude}
+                  longitude={user?.longitude}
+                  style={styles.map}
+                />
+              </View>
+              <View style={styles.coordinatesInfo}>
+                <Text style={styles.coordinateText}>
+                  <Text style={styles.coordinateLabel}>Latitude:</Text> {user?.latitude || "Não definida"}
+                </Text>
+                <Text style={styles.coordinateText}>
+                  <Text style={styles.coordinateLabel}>Longitude:</Text> {user?.longitude || "Não definida"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Botões de Ação */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/(tabs)/Beehives')}
+              >
+                <Feather name="home" size={16} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.actionButtonText}>Ver Minhas Colmeias</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.editActionButton]}
+                onPress={() => router.push('/(tabs)/UpdateProfile')}
+              >
+                <Feather name="edit-2" size={16} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.actionButtonText}>Editar Perfil</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-      
+        </ScrollView>
+      </Container>
       <Footer />
     </View>
   );
@@ -278,11 +324,262 @@ function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#f5f5f5',
   },
-  scrollContainer: {
-    flexGrow: 1,
+  scrollView: {
+    flex: 1,
+  },
+  content: {
     padding: 16,
+  },
+  profileHeader: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#f59e0b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  signOutButton: {
+    backgroundColor: '#ef4444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  signOutButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    flex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cardIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  infoList: {
+    gap: 12,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoIcon: {
+    fontSize: 16,
+    marginRight: 12,
+    width: 20,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  statusDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  totalCard: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  totalContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  totalValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#d97706',
+  },
+  totalIcon: {
+    fontSize: 32,
+  },
+  statusSection: {
+    gap: 8,
+  },
+  statusTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  statusCard: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    padding: 12,
+  },
+  statusContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statusInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  statusValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  statusPercentage: {
+    fontSize: 10,
+    color: '#6b7280',
+  },
+  mapCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mapContainer: {
+    height: 200,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  coordinatesInfo: {
+    gap: 4,
+  },
+  coordinateText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  coordinateLabel: {
+    fontWeight: '600',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  actionButton: {
+    backgroundColor: '#f59e0b',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  editActionButton: {
+    backgroundColor: '#10b981',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   loadingContainer: {
     flex: 1,
@@ -293,197 +590,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
-  profileHeader: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  profileInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  avatarContainer: {
-    width: 64,
-    height: 64,
-    backgroundColor: "#eead2d",
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1f2937",
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 16,
-    color: "#6b7280",
-  },
-  headerButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  editProfileButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#10b981",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  editProfileText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  logoutButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ef4444",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  logoutText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  infoGrid: {
-    gap: 16,
-  },
-  infoCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 8,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f2937",
-  },
-  infoList: {
-    gap: 16,
-  },
-  infoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginBottom: 2,
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#1f2937",
-  },
-  statusDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-  },
-  statsContainer: {
-    gap: 16,
-  },
-  totalStatsCard: {
-    backgroundColor: "#fef3c7",
-    borderRadius: 8,
-    padding: 16,
-  },
-  totalStatsContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  totalStatsLabel: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginBottom: 4,
-  },
-  totalStatsValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#d97706",
-  },
-  statusStatsContainer: {
-    gap: 12,
-  },
-  statusStatsTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: 8,
-  },
-  statusStatsCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 8,
-    padding: 12,
-  },
-  statusStatsContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statusStatsInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  statusStatsLabel: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginBottom: 2,
-  },
-  statusStatsValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#1f2937",
-  },
-  statusStatsPercentage: {
-    fontSize: 12,
-    color: "#6b7280",
-  },
 });
-
-export default Profile;

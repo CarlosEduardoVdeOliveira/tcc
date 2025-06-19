@@ -1,28 +1,37 @@
-import { Api } from "./api.js";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const getToken = async () => await AsyncStorage.getItem("user_token");
+
+const api = axios.create({
+  baseURL: "http://192.168.15.22:3000/api/v1/",
+});
+
+api.interceptors.request.use(async (config) => {
+  const user_token = await getToken();
+  if (user_token) {
+    config.headers.Authorization = `Bearer ${user_token}`;
+  }
+  return config;
+});
 
 /* ProductionHoney */
-const user_token = localStorage.getItem("user_token");
-export const getProductionHoney = (id) =>
-  Api.get(`/production_honey/beehive/${id} `, {
-    headers: {
-      Authorization: `Bearer ${user_token}`,
-    },
-  });
-export const createProductionHoney = (data) =>
-  Api.post("/production_honey", data, {
-    headers: {
-      Authorization: `Bearer ${user_token}`,
-    },
-  });
-export const updateProductionHoney = (data, id) =>
-  Api.put(`/production_honey/${id}`, data, {
-    headers: {
-      Authorization: `Bearer ${user_token}`,
-    },
-  });
-export const deleteProductionHoney = (id) =>
-  Api.delete(`/production_honey/${id}`, {
-    headers: {
-      Authorization: `Bearer ${user_token}`,
-    },
-  });
+export const getProductionHoney = async (beehiveId) => {
+  const response = await api.get(`/production-honey?beehiveId=${beehiveId}`);
+  return response;
+};
+
+export const createProductionHoney = async (productionData) => {
+  const response = await api.post("/production-honey", productionData);
+  return response;
+};
+
+export const updateProductionHoney = async (id, productionData) => {
+  const response = await api.put(`/production-honey/${id}`, productionData);
+  return response;
+};
+
+export const deleteProductionHoney = async (id) => {
+  const response = await api.delete(`/production-honey/${id}`);
+  return response;
+};

@@ -1,139 +1,121 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Dimensions,
-} from "react-native";
-
+import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import { getBeehives } from "../../api/beehiveApi.js";
 import CardAdd from "../../components/CardAdd.js";
 import CardBeehive from "../../components/CardBeehive.js";
+import Container from "../../components/Container.js";
 import Footer from "../../components/Footer.js";
 import Header from "../../components/Header.js";
+import Loading from "../../components/Loading.js";
 
-const { width } = Dimensions.get('window');
-
-function Beehives() {
+export default function Beehives() {
   const [beehives, setBeehives] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [userToken, setUserToken] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
-    async function loadUserData() {
-      try {
-        const userString = await AsyncStorage.getItem("user");
-        const token = await AsyncStorage.getItem("user_token");
+    loadBeehives();
+  }, []);
 
-        if (!userString || !token) {
-          navigation.navigate("Login");
-          return;
-        }
+  const loadBeehives = async () => {
+    try {
+      setLoading(true);
+      console.log("🔄 Carregando colmeias...");
 
-        const userObj = JSON.parse(userString);
-        setUserId(userObj.id);
-        setUserToken(token);
-      } catch (error) {
-        console.error("Erro ao carregar dados do usuário:", error);
-        navigation.navigate("Login");
-      }
-    }
+      const data = await getBeehives();
+      console.log("✅ Colmeias carregadas:", data);
+      setBeehives(data);
+    } catch (error) {
+      console.error("❌ Erro ao carregar colmeias:", error);
 
-    loadUserData();
-  }, [navigation]);
-
-  useEffect(() => {
-    if (!userId || !userToken) return;
-
-    async function fetchBeehives() {
-      try {
-        setLoading(true);
-        const response = await getBeehives({
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-          },
-        });
-
-        const userBeehives = response.data.filter(
-          (b) => b.producerId === userId
+      if (
+        error.code === "ECONNREFUSED" ||
+        error.message.includes("Network Error")
+      ) {
+        Alert.alert(
+          "Erro de Conexão",
+          "Não foi possível conectar ao servidor. Verifique se o backend está rodando.",
+          [{ text: "OK" }, { text: "Tentar Novamente", onPress: loadBeehives }]
         );
-        setBeehives(userBeehives);
-      } catch (err) {
-        console.error("Erro ao carregar colmeias:", err);
-      } finally {
-        setLoading(false);
+      } else {
+        Alert.alert("Erro", "Erro ao carregar colmeias. Tente novamente.");
       }
+    } finally {
+      setLoading(false);
     }
+  };
+  /* 
+  const handleTestApi = async () => {
+    try {
+      console.log("🧪 Iniciando teste da API...");
+      const result = await testApiConnection();
+      console.log("✅ Resultado do teste:", result);
+      
+      if (result) {
+        setBeehives(result);
+        Alert.alert("Sucesso", "API funcionando! Colmeias carregadas.");
+      } else {
+        Alert.alert("Aviso", "Usuário não logado ou token não encontrado.");
+      }
+    } catch (error) {
+      console.error("❌ Erro no teste:", error);
+      Alert.alert("Erro", `Erro no teste: ${error.message}`);
+    }
+  }; */
 
-    fetchBeehives();
-  }, [userId, userToken]);
+  const handleRefresh = () => {
+    loadBeehives();
+  };
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Carregando colmeias...</Text>
-        </View>
+        <Header />
+        <Loading />
+        <Footer />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" />
-      
-      {/* Header da página */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Minha(s) colmeia(s)</Text>
-        <Text style={styles.subtitle}>
-          Gerencie suas colmeias de forma eficiente
-        </Text>
-      </View>
+      <Header />
+      <Container>
+        <View style={styles.content}>
+          <Text style={styles.title}>Minhas Colmeias</Text>
 
-      {/* Conteúdo principal */}
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {beehives.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>Nenhuma colmeia cadastrada</Text>
-            <Text style={styles.emptySubtitle}>
-              Comece adicionando sua primeira colmeia para começar a gerenciar
-            </Text>
-            <CardAdd />
-          </View>
-        ) : (
-          <View style={styles.gridContainer}>
-            {beehives.map((beehive) => (
-              <TouchableOpacity
-                key={beehive.id}
-                style={styles.cardWrapper}
+          {/* <TouchableOpacity style={styles.testButton} onPress={handleTestApi}>
+            <Text style={styles.testButtonText}>🧪 Testar API</Text>
+          </TouchableOpacity> */}
+
+          <FlatList
+            data={beehives}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <CardBeehive
+                beehive={item}
                 onPress={() =>
-                  navigation.navigate("ColmeiaDetalhes", { id: beehive.id })
+                  router.push(`/(tabs)/BeehiveDetails?id=${item.id}`)
                 }
-              >
-                <CardBeehive
-                  beehive={beehive}
-                  latitude={beehive.latitude}
-                  longitude={beehive.longitude}
-                />
-              </TouchableOpacity>
-            ))}
-            <View style={styles.cardWrapper}>
-              <CardAdd />
-            </View>
-          </View>
-        )}
-      </ScrollView>
-      
+                onEdit={() =>
+                  router.push(`/(tabs)/UpdateBeehive?id=${item.id}`)
+                }
+              />
+            )}
+            ListHeaderComponent={
+              <CardAdd
+                title="Cadastrar Nova Colmeia"
+                onPress={() => router.push("/(tabs)/CreateBeehive")}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+            refreshing={loading}
+            onRefresh={handleRefresh}
+          />
+        </View>
+      </Container>
       <Footer />
     </View>
   );
@@ -144,67 +126,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  header: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-  },
-  scrollContainer: {
-    flexGrow: 1,
+  content: {
+    flex: 1,
     padding: 16,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "600",
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
     color: "#333",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 24,
-    paddingHorizontal: 20,
-  },
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  cardWrapper: {
-    width: (width - 48) / 2, // 2 colunas com gap de 16px
     marginBottom: 16,
+    textAlign: "center",
+  },
+  testButton: {
+    backgroundColor: "#f59e0b",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: "center",
+  },
+  testButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
 });
-
-export default Beehives;

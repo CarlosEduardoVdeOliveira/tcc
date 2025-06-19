@@ -1,6 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useEffect, useState } from "react";
+import { getApiUrl } from "../utils/config.js";
 
 export const AuthContext = createContext({});
 
@@ -29,10 +30,15 @@ export const AuthProvider = ({ children }) => {
 
   const signin = async (email, password) => {
     try {
-      const response = await axios.post("http://localhost:3000/api/v1/login", {
+      console.log("🔐 Tentando fazer login com:", email);
+      console.log("🌐 URL da API:", getApiUrl());
+      
+      const response = await axios.post(`${getApiUrl()}login`, {
         email,
         password,
       });
+
+      console.log("✅ Resposta do login:", response.data);
 
       const { user, token } = response.data;
 
@@ -41,7 +47,17 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       return { success: true };
     } catch (error) {
-      return { error: true, message: "E-mail ou senha inválidos" };
+      console.error("❌ Erro no login:", error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        return { error: true, message: "E-mail ou senha inválidos" };
+      } else if (error.response?.status === 400) {
+        return { error: true, message: error.response.data?.message || "Dados inválidos" };
+      } else if (error.code === 'ECONNREFUSED') {
+        return { error: true, message: "Servidor não está rodando. Verifique se o backend está ativo." };
+      } else {
+        return { error: true, message: "Erro de conexão. Tente novamente." };
+      }
     }
   };
 

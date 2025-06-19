@@ -1,16 +1,11 @@
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ImgHero from "../../assets/images/imgHero.png"; // Certifique-se de que a imagem existe
 import Container from "../../components/Container.js";
 import Footer from "../../components/Footer.js";
-import { CreateAccount } from "./CreateAccount.jsx";
-import { Login } from "./Login.jsx";
 
 function Home() {
-  /* const navigation = useNavigation();
-   */
-  const Tab = createBottomTabNavigator();
+  const navigation = useNavigation();
 
   return (
     <Container>
@@ -22,16 +17,21 @@ function Home() {
           </Text>
         </View>
 
-        <NavigationContainer style={styles.buttons}>
-          <Tab.Screen
-            name="Já tenho conta"
-            component={Login}
-            style={styles.primaryButton}
-            textStyle={{ color: "#6B4C00" }}
-          />
+        <View style={styles.buttons}>
+          <TouchableOpacity 
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => navigation.navigate("Login")}
+          >
+            <Text style={styles.buttonText}>Já tenho conta</Text>
+          </TouchableOpacity>
 
-          <Tab.Screen name="Quero me cadastrar" component={CreateAccount} />
-        </NavigationContainer>
+          <TouchableOpacity 
+            style={[styles.button, styles.secondaryButton]}
+            onPress={() => navigation.navigate("CreateAccount")}
+          >
+            <Text style={styles.buttonText}>Quero me cadastrar</Text>
+          </TouchableOpacity>
+        </View>
 
         <Image source={ImgHero} style={styles.image} resizeMode="contain" />
 
@@ -63,14 +63,28 @@ const styles = StyleSheet.create({
   },
   buttons: {
     width: "75%",
-    height: 75,
     marginBottom: 20,
     marginRight: 40,
     marginLeft: 40,
     gap: 12,
   },
+  button: {
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   primaryButton: {
     backgroundColor: "#FACC15",
+  },
+  secondaryButton: {
+    backgroundColor: "#6B4C00",
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#6B4C00",
   },
   image: {
     width: 250,
@@ -78,4 +92,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
+
 export default Home;

@@ -1,40 +1,35 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
+import { useRouter } from 'expo-router';
+import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 function Header({ pathName }) {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const userToken = true; // Substitua por seu método de autenticação (ex: useAuth())
+  const router = useRouter();
 
   return (
-    <View style={styles.header}>
-      {userToken && route.name !== "Home" ? (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.navigate(pathName)}
+          onPress={() => router.back()}
           style={styles.iconButton}
         >
-          <Icon name="arrow-back" size={24} color="#fff" />
+          <Text style={styles.iconText}>←</Text>
         </TouchableOpacity>
-      ) : (
-        <View style={styles.placeholder} />
-      )}
 
-      {userToken && route.name !== "Perfil" ? (
         <TouchableOpacity
-          onPress={() => navigation.navigate("Perfil")}
+          onPress={() => router.push('/(tabs)/Profile')}
           style={styles.profileButton}
         >
-          <Icon name="person" size={24} color="#fff" />
+          <Text style={styles.iconText}>👤</Text>
         </TouchableOpacity>
-      ) : (
-        <View style={styles.placeholder} />
-      )}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: 'transparent',
+  },
   header: {
     backgroundColor: "#eead2d",
     paddingVertical: 16,
@@ -43,10 +38,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -61,8 +53,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
-  placeholder: {
-    width: 40,
+  iconText: {
+    fontSize: 20,
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

@@ -1,54 +1,30 @@
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { AuthProvider } from "../contexts/auth.js";
+
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from "../hooks/useAuth.js";
 
-import BeehiveDetails from "./(tabs)/BeehiveDetails.jsx";
-import Beehives from "./(tabs)/Beehives.jsx";
-import CreateAccount from "./(tabs)/CreateAccount.jsx";
-import CreateBeehive from "./(tabs)/CreateBeehive.jsx";
-import Home from "./(tabs)/Home.jsx";
-import Login from "./(tabs)/Login.jsx";
-import Profile from "./(tabs)/Profile.jsx";
-import UpdateBeehive from "./(tabs)/UpdateBeehive.jsx";
-import UpdateProfile from "./(tabs)/UpdateProfile.jsx";
-
-const Stack = createNativeStackNavigator();
-
-function AppRoutes() {
+export default function Index() {
   const { signed, loading } = useAuth();
-  if (loading) {
-    return null; // ou um SplashScreen
-  }
-  return (
-    <Stack.Navigator>
-      {signed ? (
-        <>
-          <Stack.Screen name="Beehives" component={Beehives} />
-          <Stack.Screen name="Profile" component={Profile} />
-          <Stack.Screen name="UpdateProfile" component={UpdateProfile} />
-          <Stack.Screen name="CreateBeehive" component={CreateBeehive} />
-          <Stack.Screen name="BeehiveDetails" component={BeehiveDetails} />
-          <Stack.Screen name="UpdateBeehive" component={UpdateBeehive} />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="CreateAccount" component={CreateAccount} />
-        </>
-      )}
-    </Stack.Navigator>
-  );
-}
+  const router = useRouter();
 
-function index() {
-  return (
-    <AuthProvider>
-      <NavigationContainer>
-        <AppRoutes />
-      </NavigationContainer>
-    </AuthProvider>
-  );
+  useEffect(() => {
+    if (!loading) {
+      if (signed) {
+        router.replace('/(tabs)/Beehives');
+      } else {
+        router.replace('/Home');
+      }
+    }
+  }, [signed, loading, router]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#eead2d" />
+      </View>
+    );
+  }
+
+  return null;
 }
-export default index;

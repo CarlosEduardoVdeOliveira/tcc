@@ -1,15 +1,15 @@
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from "lucide-react-native";
 import { useContext, useState } from "react";
 import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  KeyboardAvoidingView,
-  Platform,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Button from "../../components/Button.js";
 import { AuthContext } from "../../contexts/auth.js";
@@ -18,14 +18,21 @@ function Login() {
   const [viewPassword, setViewPassword] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { signin } = useContext(AuthContext);
-  const navigation = useNavigation();
+  const router = useRouter();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha e-mail e senha");
+      return;
+    }
+    setLoading(true);
     const result = await signin(email, password);
+    setLoading(false);
     if (result.success) {
-      navigation.navigate("BeehiveList"); // ajuste conforme a sua rota
+      router.replace('/(tabs)/Beehives');
     } else {
       Alert.alert("Erro", result.message);
     }
@@ -73,11 +80,13 @@ function Login() {
             onPress={handleLogin}
             style={styles.button}
             textStyle={styles.buttonText}
+            loading={loading}
+            disabled={loading}
           />
 
           <TouchableOpacity
             style={{ marginTop: 18 }}
-            onPress={() => navigation.navigate("CreateAccount")}
+            onPress={() => router.push("/CreateAccount")}
           >
             <Text style={styles.link}>Ainda não tem conta? Cadastre-se</Text>
           </TouchableOpacity>

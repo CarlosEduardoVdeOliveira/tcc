@@ -1,26 +1,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { 
-  Alert, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  Platform 
+import { Controller, useForm } from "react-hook-form";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
 import { createBeehive } from "../../api/beehiveApi.js";
 import Button from "../../components/Button.js";
-import Header from "../../components/Header.js";
 import Footer from "../../components/Footer.js";
+import Header from "../../components/Header.js";
 
 const schema = z.object({
   name: z.string().min(3, "Nome é obrigatório"),
@@ -30,25 +30,31 @@ const schema = z.object({
   observations: z.string().optional(),
   startDate: z.string().min(1, "Selecione a data de início."),
   status: z.string().min(1, "Selecione um status"),
-  latitude: z.number().min(2, "Localização inválida"),
-  longitude: z.number().min(2, "Localização inválida"),
+  latitude: z
+    .number()
+    .refine((val) => val >= -90 && val <= 90, "Latitude inválida"),
+  longitude: z
+    .number()
+    .refine((val) => val >= -180 && val <= 180, "Longitude inválida"),
 });
 
 function CreateBeehive() {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [producerId, setProducerId] = useState(null);
-  const [coords, setCoords] = useState({ latitude: -15.7801, longitude: -47.9292 });
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [loading, setLoading] = useState(false);
 
   const {
+    control,
     setValue,
     handleSubmit,
-    formState: { errors },
+    watch,
+    formState: { errors, isValid },
   } = useForm({
     resolver: zodResolver(schema),
+    mode: "onChange", // para atualizar isValid sempre que mudar
     defaultValues: {
       name: "",
       typeBeehive: "",
@@ -59,6 +65,11 @@ function CreateBeehive() {
       longitude: -47.9292,
     },
   });
+
+  // Para sincronizar status e localização com o formulário
+  const status = watch("status");
+  const latitude = watch("latitude");
+  const longitude = watch("longitude");
 
   useEffect(() => {
     const loadUser = async () => {
@@ -76,56 +87,54 @@ function CreateBeehive() {
       Alert.alert("Erro", "Usuário não autenticado.");
       return;
     }
-
-    try {
-      await createBeehive({
-        ...data,
-        producerId,
-      });
-
-      Alert.alert("Sucesso", "Colmeia criada com sucesso!");
-      navigation.navigate("BeehiveList");
-    } catch (error) {
-      console.error("Erro ao criar colmeia:", error);
-      Alert.alert("Erro", "Falha ao criar colmeia.");
+    setLoading(true);
+    const result = await createBeehive({
+      ...data,
+      producerId,
+    });
+    setLoading(false);
+    if (result?.error) {
+      Alert.alert("Erro", result.message || "Falha ao criar colmeia.");
+      return;
     }
+    Alert.alert("Sucesso", "Colmeia criada com sucesso!");
+    router.replace("/(tabs)/Beehives");
   };
 
   const handleMapPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
-    setCoords({ latitude, longitude });
-    setValue("latitude", latitude);
-    setValue("longitude", longitude);
+    setValue("latitude", latitude, { shouldValidate: true, shouldTouch: true });
+    setValue("longitude", longitude, {
+      shouldValidate: true,
+      shouldTouch: true,
+    });
   };
 
   const handleStatusSelect = (status) => {
-    setSelectedStatus(status);
-    setValue("status", status);
+    setValue("status", status, { shouldValidate: true, shouldTouch: true });
     setShowStatusPicker(false);
   };
-
   const handleDateChange = (event, date) => {
-    setShowDatePicker(false);
-    if (date) {
-      setSelectedDate(date);
-      const formattedDate = date.toISOString().split('T')[0];
-      setValue("startDate", formattedDate);
-    }
-  };
-
+  setShowDatePicker(false);
+  if (date) {
+    setSelectedDate(date);
+    // Formata para 'YYYY-MM-DD' ou outro formato que sua API espera
+    const formattedDate = date.toISOString().split("T")[0];
+    setValue("startDate", formattedDate, { shouldValidate: true, shouldTouch: true });
+  }
+};
   const formatDate = (date) => {
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   return (
     <View style={styles.container}>
       <Header pathName="/" />
-      
-      <ScrollView 
+
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header da página */}
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Colmeia</Text>
           <Text style={styles.subtitle}>
@@ -133,58 +142,83 @@ function CreateBeehive() {
           </Text>
         </View>
 
-        {/* Formulário */}
         <View style={styles.form}>
           {/* Nome */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Digite o nome da colmeia"
-              onChangeText={(text) => setValue("name", text)}
-            />
-            {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
-          </View>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nome</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite o nome da colmeia"
+                  value={value}
+                  onChangeText={onChange}
+                />
+                {errors.name && (
+                  <Text style={styles.error}>{errors.name.message}</Text>
+                )}
+              </View>
+            )}
+          />
 
           {/* Tipo de Colmeia */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tipo de Colmeia</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Digite o tipo da colmeia"
-              onChangeText={(text) => setValue("typeBeehive", text)}
-            />
-            {errors.typeBeehive && (
-              <Text style={styles.error}>{errors.typeBeehive.message}</Text>
+          <Controller
+            control={control}
+            name="typeBeehive"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Tipo de Colmeia</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite o tipo da colmeia"
+                  value={value}
+                  onChangeText={onChange}
+                />
+                {errors.typeBeehive && (
+                  <Text style={styles.error}>{errors.typeBeehive.message}</Text>
+                )}
+              </View>
             )}
-          </View>
+          />
 
           {/* Observações */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <TextInput
-              style={[styles.input, styles.textarea]}
-              placeholder="Digite observações sobre a colmeia"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              onChangeText={(text) => setValue("observations", text)}
-            />
-          </View>
+          <Controller
+            control={control}
+            name="observations"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Observações</Text>
+                <TextInput
+                  style={[styles.input, styles.textarea]}
+                  placeholder="Digite observações sobre a colmeia"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              </View>
+            )}
+          />
 
           {/* Status e Data */}
           <View style={styles.rowContainer}>
             {/* Status */}
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Status</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.selectInput}
                 onPress={() => setShowStatusPicker(true)}
               >
-                <Text style={selectedStatus ? styles.selectText : styles.placeholderText}>
-                  {selectedStatus || "Selecione o status"}
+                <Text
+                  style={status ? styles.selectText : styles.placeholderText}
+                >
+                  {status || "Selecione o status"}
                 </Text>
                 <Icon name="chevron-down" size={20} color="#666" />
+
               </TouchableOpacity>
               {errors.status && (
                 <Text style={styles.error}>{errors.status.message}</Text>
@@ -194,12 +228,14 @@ function CreateBeehive() {
             {/* Data */}
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Data de Início</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.selectInput}
                 onPress={() => setShowDatePicker(true)}
               >
                 <Text style={styles.selectText}>
-                  {formatDate(selectedDate)}
+                  {watch("startDate")
+                    ? new Date(watch("startDate")).toLocaleDateString("pt-BR")
+                    : formatDate(selectedDate)}
                 </Text>
                 <Icon name="calendar" size={20} color="#666" />
               </TouchableOpacity>
@@ -218,25 +254,33 @@ function CreateBeehive() {
             <MapView
               style={styles.map}
               initialRegion={{
-                latitude: coords.latitude,
-                longitude: coords.longitude,
+                latitude: latitude,
+                longitude: longitude,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
               }}
               onPress={handleMapPress}
             >
-              {coords.latitude !== -15.7801 && <Marker coordinate={coords} />}
+              <Marker coordinate={{ latitude, longitude }} />
             </MapView>
-            {errors.latitude && (
-              <Text style={styles.error}>{errors.latitude.message}</Text>
-            )}
-            {errors.longitude && (
-              <Text style={styles.error}>{errors.longitude.message}</Text>
+            {(errors.latitude || errors.longitude) && (
+              <>
+                {errors.latitude && (
+                  <Text style={styles.error}>{errors.latitude.message}</Text>
+                )}
+                {errors.longitude && (
+                  <Text style={styles.error}>{errors.longitude.message}</Text>
+                )}
+              </>
             )}
           </View>
 
           {/* Botão Adicionar */}
-          <Button title="Adicionar Colmeia" onPress={handleSubmit(onSubmit)} />
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            loading={loading}
+            disabled={loading || !isValid}
+          >Adicionar Colmeia</Button>
         </View>
       </ScrollView>
 
@@ -245,25 +289,25 @@ function CreateBeehive() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Selecione o Status</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Ativa")}
             >
               <Text style={styles.modalOptionText}>Ativa</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Em Manutenção")}
             >
               <Text style={styles.modalOptionText}>Em Manutenção</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Abandonada")}
             >
               <Text style={styles.modalOptionText}>Abandonada</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalCancel}
               onPress={() => setShowStatusPicker(false)}
             >
@@ -278,7 +322,7 @@ function CreateBeehive() {
         <DateTimePicker
           value={selectedDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
           maximumDate={new Date()}
         />

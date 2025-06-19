@@ -58,10 +58,35 @@ const deleteFood = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const syncFoods = async (req, res) => {
+  try {
+    const foods = req.body;
+
+    if (!Array.isArray(foods)) {
+      return res.status(400).json({ error: "Formato inválido. Esperado um array de alimentações." });
+    }
+
+    const result = await prisma.$transaction(
+      foods.map((food) =>
+        prisma.food.upsert({
+          where: { id: food.id || 0 },
+          update: food,
+          create: food,
+        })
+      )
+    );
+
+    res.status(201).json({ message: "Alimentações sincronizadas com sucesso", result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export default {
   getAllFoods,
   getFoodsByBeehiveId,
   createFood,
   updateFood,
   deleteFood,
+  syncFoods
 };

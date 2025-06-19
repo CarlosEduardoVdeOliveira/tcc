@@ -70,10 +70,35 @@ const deleteTemperatureHumidity = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const syncTemperatureHumidity = async (req, res) => {
+  try {
+    const records = req.body;
+
+    if (!Array.isArray(records)) {
+      return res.status(400).json({ error: "Formato inválido. Esperado um array de registros de temperatura/umidade." });
+    }
+
+    const result = await prisma.$transaction(
+      records.map((record) =>
+        prisma.temperaturesHumidity.upsert({
+          where: { id: record.id || 0 },
+          update: record,
+          create: record,
+        })
+      )
+    );
+
+    res.status(201).json({ message: "Temperaturas e umidades sincronizadas com sucesso", result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export default {
   getAllTemperatureHumidity,
   getTemperatureHumidityByBeehiveId,
   createTemperatureHumidity,
   updateTemperatureHumidity,
   deleteTemperatureHumidity,
+  syncTemperatureHumidity
 };

@@ -1,45 +1,143 @@
-import React, { useState } from "react";
-import { View, Alert } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { createDisease } from "../api/diseaseApi";
-import { Button } from "./Button";
-import { GroupInput } from "./GroupInput";
-import { GroupTextarea } from "./GroupTextarea";
+import { useRouter } from 'expo-router';
+import { useState } from "react";
+import {
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { createDisease } from "../api/diseaseApi.js";
+import Button from "./Button.js";
 
-function FormDisease() {
-  const route = useRoute();
-  const { id } = route.params;
-  const navigation = useNavigation();
-
+export default function FormDisease({ visible, onClose, beehiveId }) {
+  const [disease, setDisease] = useState("");
   const [dateDiagnosis, setDateDiagnosis] = useState("");
-  const [diseasePrague, setDiseasePrague] = useState("");
-  const [treatment, setTreatment] = useState("");
-  const [observations, setObservations] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async () => {
+    if (!disease || !dateDiagnosis) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos");
+      return;
+    }
+
+    setLoading(true);
     try {
       await createDisease({
-        beehiveId: Number(id),
+        disease,
         dateDiagnosis,
-        diseasePrague,
-        treatment,
-        observations,
+        beehiveId,
       });
-      navigation.navigate("BeehiveDetails", { id });
+
+      Alert.alert("Sucesso", "Doença registrada com sucesso!");
+      onClose();
+      router.push({
+        pathname: '/(tabs)/BeehiveDetails',
+        params: { id: beehiveId }
+      });
     } catch (error) {
-      Alert.alert("Erro", "Falha ao cadastrar doença.");
+      console.error("Erro ao criar doença:", error);
+      Alert.alert("Erro", "Falha ao registrar doença");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={{ gap: 16 }}>
-      <GroupInput type="date" label="Data do diagnóstico" value={dateDiagnosis} onChangeText={setDateDiagnosis} />
-      <GroupInput label="Qual doença" value={diseasePrague} onChangeText={setDiseasePrague} />
-      <GroupTextarea label="Tratamento" value={treatment} onChangeText={setTreatment} />
-      <GroupTextarea label="Observações" value={observations} onChangeText={setObservations} />
-      <Button title="Cadastrar Doença/Praga" onPress={handleSubmit} />
-    </View>
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={styles.overlay}>
+        <View style={styles.modal}>
+          <Text style={styles.title}>Registrar Doença</Text>
+          
+          <Text style={styles.label}>Doença</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Descreva a doença identificada"
+            value={disease}
+            onChangeText={setDisease}
+            multiline
+          />
+
+          <Text style={styles.label}>Data do Diagnóstico</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="YYYY-MM-DD"
+            value={dateDiagnosis}
+            onChangeText={setDateDiagnosis}
+          />
+
+          <View style={styles.buttons}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            
+            <Button
+              title={loading ? "Salvando..." : "Salvar"}
+              onPress={handleSubmit}
+              style={styles.saveButton}
+              disabled={loading}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
-export default FormDisease
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modal: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 24,
+    width: "90%",
+    maxWidth: 400,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  buttons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+  cancelText: {
+    color: "#666",
+    fontSize: 16,
+  },
+  saveButton: {
+    flex: 1,
+  },
+});

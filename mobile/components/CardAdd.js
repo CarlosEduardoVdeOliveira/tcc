@@ -1,23 +1,17 @@
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
 
 function CardAdd() {
-  const navigation = useNavigation();
+  const router = useRouter();
 
   return (
     <TouchableOpacity 
       style={styles.card}
-      onPress={() => navigation.navigate("CadastrarColmeia")}
+      onPress={() => router.push('/(tabs)/CreateBeehive')}
       activeOpacity={0.7}
     >
       <View style={styles.content}>
-        <Icon 
-          name="add-circle-outline" 
-          size={32} 
-          color="#9ca3af"
-          style={styles.icon}
-        />
+        <Text style={styles.icon}>+</Text>
         <Text style={styles.text}>Adicionar Colmeia</Text>
       </View>
     </TouchableOpacity>
@@ -48,7 +42,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   icon: {
+    fontSize: 32,
+    color: "#9ca3af",
     marginBottom: 8,
+    fontWeight: "bold",
   },
   text: {
     fontSize: 14,
