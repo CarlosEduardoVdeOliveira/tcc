@@ -20,9 +20,9 @@ function Header({ pathName }) {
         <View style={styles.placeholder} />
       )}
 
-      {userToken && route.name !== "Perfil" ? (
+      {userToken && route.name !== "Profile" ? (
         <TouchableOpacity
-          onPress={() => navigation.navigate("Perfil")}
+          onPress={() => navigation.navigate("Profile")}
           style={styles.profileButton}
         >
           <Icon name="person" size={24} color="#fff" />

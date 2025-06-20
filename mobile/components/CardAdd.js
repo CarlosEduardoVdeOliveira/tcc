@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 function CardAdd() {
@@ -8,7 +8,7 @@ function CardAdd() {
   return (
     <TouchableOpacity 
       style={styles.card}
-      onPress={() => navigation.navigate("CadastrarColmeia")}
+      onPress={() => navigation.navigate("CreateBeehive")}
       activeOpacity={0.7}
     >
       <View style={styles.content}>

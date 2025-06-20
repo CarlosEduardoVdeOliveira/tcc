@@ -1,18 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
-import { 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  ScrollView 
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 import { getUser } from "../../api/userApi.js";
-import Header from "../../components/Header.js";
 import Footer from "../../components/Footer.js";
+import Header from "../../components/Header.js";
 import { formatDate } from "../../utils/formatDate.js";
 
 function Profile() {
@@ -20,31 +20,39 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await AsyncStorage.getItem("user");
-        const userToken = await AsyncStorage.getItem("user_token");
+  const loadUser = async () => {
+    try {
+      setLoading(true);
+      const userData = await AsyncStorage.getItem("user");
+      const userToken = await AsyncStorage.getItem("user_token");
 
-        if (!userData || !userToken) {
-          navigation.navigate("Login");
-          return;
-        }
-
-        const parsedUser = JSON.parse(userData);
-        const id = parsedUser.id;
-
-        const response = await getUser(id);
-        setUser(response.data);
-      } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
-      } finally {
-        setLoading(false);
+      if (!userData || !userToken) {
+        navigation.navigate("Login");
+        return;
       }
-    };
 
+      const parsedUser = JSON.parse(userData);
+      const id = parsedUser.id;
+
+      const response = await getUser(id);
+      setUser(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadUser();
   }, [navigation]);
+
+  // Recarregar dados quando a tela for focada
+  useFocusEffect(
+    useCallback(() => {
+      loadUser();
+    }, [])
+  );
 
   const logOut = async () => {
     await AsyncStorage.removeItem("user_token");

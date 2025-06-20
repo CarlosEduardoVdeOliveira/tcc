@@ -1,9 +1,9 @@
 import {
-  Modal as RNModal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal as RNModal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 
@@ -13,7 +13,7 @@ function Modal({ visible, onClose, title, children }) {
       <View style={styles.overlay}>
         <View style={styles.container}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Feather name="close" color="#78350f" />
+            <Feather name="x" color="#78350f" size={20} />
           </TouchableOpacity>
           <Text style={styles.title}>{title}</Text>
           <View>{children}</View>

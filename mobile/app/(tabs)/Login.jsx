@@ -3,13 +3,13 @@ import { Eye, EyeOff } from "lucide-react-native";
 import { useContext, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import Button from "../../components/Button.js";
 import { AuthContext } from "../../contexts/auth.js";
@@ -25,7 +25,7 @@ function Login() {
   const handleLogin = async () => {
     const result = await signin(email, password);
     if (result.success) {
-      navigation.navigate("BeehiveList"); // ajuste conforme a sua rota
+      navigation.navigate("Beehives"); // ajuste conforme a sua rota
     } else {
       Alert.alert("Erro", result.message);
     }
@@ -38,7 +38,9 @@ function Login() {
     >
       <View style={styles.container}>
         <Text style={styles.title}>Boas-vindas!</Text>
-        <Text style={styles.subtitle}>A sua plataforma de gerenciamento das suas colmeias.</Text>
+        <Text style={styles.subtitle}>
+          A sua plataforma de gerenciamento das suas colmeias.
+        </Text>
         <View style={styles.formBox}>
           <Text style={styles.formTitle}>Já tem conta? Faça seu login:</Text>
 
@@ -64,16 +66,21 @@ function Login() {
               placeholderTextColor="#bdbdbd"
             />
             <TouchableOpacity onPress={() => setViewPassword((prev) => !prev)}>
-              {viewPassword ? <EyeOff size={22} color="#bdbdbd" /> : <Eye size={22} color="#bdbdbd" />}
+              {viewPassword ? (
+                <EyeOff size={22} color="#bdbdbd" />
+              ) : (
+                <Eye size={22} color="#bdbdbd" />
+              )}
             </TouchableOpacity>
           </View>
 
           <Button
-            title="Entrar"
             onPress={handleLogin}
             style={styles.button}
             textStyle={styles.buttonText}
-          />
+          >
+            <Text>Entrar</Text>
+          </Button>
 
           <TouchableOpacity
             style={{ marginTop: 18 }}

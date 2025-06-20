@@ -1,17 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Platform,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -37,7 +37,10 @@ const schema = z.object({
 
 function CreateAccount() {
   const [viewPassword, setViewPassword] = useState(true);
-  const [coords, setCoords] = useState({ latitude: -15.7801, longitude: -47.9292 });
+  const [coords, setCoords] = useState({
+    latitude: -15.7801,
+    longitude: -47.9292,
+  });
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -45,7 +48,6 @@ function CreateAccount() {
   const navigation = useNavigation();
 
   const {
-    register,
     handleSubmit,
     setValue,
     formState: { errors },
@@ -91,13 +93,13 @@ function CreateAccount() {
     setShowDatePicker(false);
     if (date) {
       setSelectedDate(date);
-      const formattedDate = date.toISOString().split('T')[0];
+      const formattedDate = date.toISOString().split("T")[0];
       setValue("startDate", formattedDate);
     }
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   return (
@@ -119,7 +121,9 @@ function CreateAccount() {
             placeholder="Digite seu nome"
             onChangeText={(text) => setValue("name", text)}
           />
-          {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+          {errors.name && (
+            <Text style={styles.error}>{errors.name.message}</Text>
+          )}
         </View>
 
         {/* Email */}
@@ -132,7 +136,9 @@ function CreateAccount() {
             autoCapitalize="none"
             onChangeText={(text) => setValue("email", text)}
           />
-          {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+          {errors.email && (
+            <Text style={styles.error}>{errors.email.message}</Text>
+          )}
         </View>
 
         {/* CPF/CNPJ */}
@@ -158,13 +164,13 @@ function CreateAccount() {
               secureTextEntry={viewPassword}
               onChangeText={(text) => setValue("password", text)}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.eyeButton}
               onPress={() => setViewPassword(!viewPassword)}
             >
-              <Icon 
-                name={viewPassword ? "eye-off" : "eye"} 
-                size={24} 
+              <Icon
+                name={viewPassword ? "eye-off" : "eye"}
+                size={24}
                 color="#666"
               />
             </TouchableOpacity>
@@ -179,11 +185,15 @@ function CreateAccount() {
           {/* Status */}
           <View style={styles.halfWidth}>
             <Text style={styles.label}>Status</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.selectInput}
               onPress={() => setShowStatusPicker(true)}
             >
-              <Text style={selectedStatus ? styles.selectText : styles.placeholderText}>
+              <Text
+                style={
+                  selectedStatus ? styles.selectText : styles.placeholderText
+                }
+              >
                 {selectedStatus || "Selecione o status"}
               </Text>
               <Icon name="chevron-down" size={20} color="#666" />
@@ -196,13 +206,11 @@ function CreateAccount() {
           {/* Data */}
           <View style={styles.halfWidth}>
             <Text style={styles.label}>Data de início</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.selectInput}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={styles.selectText}>
-                {formatDate(selectedDate)}
-              </Text>
+              <Text style={styles.selectText}>{formatDate(selectedDate)}</Text>
               <Icon name="calendar" size={20} color="#666" />
             </TouchableOpacity>
             {errors.startDate && (
@@ -235,15 +243,18 @@ function CreateAccount() {
         </View>
 
         {/* Botão Cadastrar */}
-        <Button title="Cadastrar" onPress={handleSubmit(onSubmit)} />
+        <Button onPress={handleSubmit(onSubmit)}>
+          <Text>Cadastrar</Text>
+        </Button>
 
         {/* Link para Login */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.loginLinkContainer}
           onPress={() => navigation.navigate("Login")}
         >
           <Text style={styles.loginLink}>
-            Já tenho conta, <Text style={styles.loginLinkBold}>fazer login?</Text>
+            Já tenho conta,{" "}
+            <Text style={styles.loginLinkBold}>fazer login?</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -253,19 +264,19 @@ function CreateAccount() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Selecione o Status</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Ativo")}
             >
               <Text style={styles.modalOptionText}>Ativo</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("Inativo")}
             >
               <Text style={styles.modalOptionText}>Inativo</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalCancel}
               onPress={() => setShowStatusPicker(false)}
             >
@@ -280,7 +291,7 @@ function CreateAccount() {
         <DateTimePicker
           value={selectedDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
           maximumDate={new Date()}
         />

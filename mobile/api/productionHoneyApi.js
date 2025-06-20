@@ -1,28 +1,39 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Api } from "./api.js";
 
 /* ProductionHoney */
-const user_token = localStorage.getItem("user_token");
-export const getProductionHoney = (id) =>
-  Api.get(`/production_honey/beehive/${id} `, {
+export const getProductionHoney = async (id) => {
+  const user_token = await AsyncStorage.getItem("user_token");
+  return Api.get(`/production_honey/beehive/${id} `, {
     headers: {
       Authorization: `Bearer ${user_token}`,
     },
   });
-export const createProductionHoney = (data) =>
-  Api.post("/production_honey", data, {
+};
+
+export const createProductionHoney = async (data) => {
+  const user_token = await AsyncStorage.getItem("user_token");
+  return Api.post("/production_honey", data, {
     headers: {
       Authorization: `Bearer ${user_token}`,
     },
   });
-export const updateProductionHoney = (data, id) =>
-  Api.put(`/production_honey/${id}`, data, {
+};
+
+export const updateProductionHoney = async (data, id) => {
+  const user_token = await AsyncStorage.getItem("user_token");
+  return Api.put(`/production_honey/${id}`, data, {
     headers: {
       Authorization: `Bearer ${user_token}`,
     },
   });
-export const deleteProductionHoney = (id) =>
-  Api.delete(`/production_honey/${id}`, {
+};
+
+export const deleteProductionHoney = async (id) => {
+  const user_token = await AsyncStorage.getItem("user_token");
+  return Api.delete(`/production_honey/${id}`, {
     headers: {
       Authorization: `Bearer ${user_token}`,
     },
   });
+};

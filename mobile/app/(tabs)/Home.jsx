@@ -1,11 +1,10 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
 import { Image, StyleSheet, Text, View } from "react-native";
 import ImgHero from "../../assets/images/imgHero.png"; // Certifique-se de que a imagem existe
 import Container from "../../components/Container.js";
 import Footer from "../../components/Footer.js";
-import { CreateAccount } from "./CreateAccount.jsx";
-import { Login } from "./Login.jsx";
+import CreateAccount from "./CreateAccount.jsx";
+import Login from "./Login.jsx";
 
 function Home() {
   /* const navigation = useNavigation();
@@ -22,7 +21,7 @@ function Home() {
           </Text>
         </View>
 
-        <NavigationContainer style={styles.buttons}>
+        <View style={styles.buttons}>
           <Tab.Screen
             name="Já tenho conta"
             component={Login}
@@ -31,7 +30,7 @@ function Home() {
           />
 
           <Tab.Screen name="Quero me cadastrar" component={CreateAccount} />
-        </NavigationContainer>
+        </View>
 
         <Image source={ImgHero} style={styles.image} resizeMode="contain" />
 

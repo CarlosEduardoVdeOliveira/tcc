@@ -2,12 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Dimensions,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { getBeehives } from "../../api/beehiveApi.js";
@@ -113,19 +112,13 @@ function Beehives() {
         ) : (
           <View style={styles.gridContainer}>
             {beehives.map((beehive) => (
-              <TouchableOpacity
-                key={beehive.id}
-                style={styles.cardWrapper}
-                onPress={() =>
-                  navigation.navigate("ColmeiaDetalhes", { id: beehive.id })
-                }
-              >
+              <View key={beehive.id} style={styles.cardWrapper}>
                 <CardBeehive
                   beehive={beehive}
                   latitude={beehive.latitude}
                   longitude={beehive.longitude}
                 />
-              </TouchableOpacity>
+              </View>
             ))}
             <View style={styles.cardWrapper}>
               <CardAdd />

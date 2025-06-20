@@ -17,8 +17,8 @@ import {
 } from "react-native";
 import { z } from "zod";
 import { getBeehive, updateBeehive } from "../../api/beehiveApi.js";
-import Button from "../../components/Button.js";
-import Map from "../../components/Map.js";
+import { Button } from "../../components/Button";
+import { Map } from "../../components/Map";
 
 // Esquema Zod
 const schema = z.object({
@@ -103,7 +103,7 @@ function UpdateBeehive() {
     }
 
     fetchBeehive();
-  }, [id, setValue]);
+  }, [id]);
 
   const onSubmit = async (data) => {
     try {
@@ -118,7 +118,7 @@ function UpdateBeehive() {
         }
       );
       Alert.alert("Sucesso", "Colmeia atualizada com sucesso!");
-      navigation.navigate("Beehives");
+      navigation.navigate("BeehiveList");
     } catch (err) {
       console.error("Erro ao atualizar:", err);
       Alert.alert("Erro", "Não foi possível atualizar a colmeia.");
@@ -132,13 +132,6 @@ function UpdateBeehive() {
       const formattedDate = selectedDate.toISOString().split('T')[0];
       setValue("startDate", formattedDate);
     }
-  };
-
-  // Função para formatar data no formato brasileiro
-  const formatDateToBrazilian = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
   };
 
   const getStatusColor = (status) => {
@@ -254,18 +247,15 @@ function UpdateBeehive() {
             )}
           </View>
 
-          {/* Data de Início */}
+          {/* Data */}
           <View style={[styles.inputGroup, styles.halfWidth]}>
             <Text style={styles.label}>Data de Início</Text>
             <TouchableOpacity
               style={styles.selectInput}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={[
-                styles.selectText,
-                { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
-              ]}>
-                {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
+              <Text style={styles.selectText}>
+                {selectedDate.toLocaleDateString('pt-BR')}
               </Text>
             </TouchableOpacity>
             {errors.startDate && (
@@ -275,35 +265,47 @@ function UpdateBeehive() {
         </View>
 
         {/* Mapa */}
-        <View style={styles.inputGroup}>
+        <View style={styles.mapContainer}>
           <Text style={styles.label}>Localização</Text>
-          <View style={styles.mapContainer}>
-            <Map
-              key={`${watchedValues.latitude}-${watchedValues.longitude}`}
-              latitude={watchedValues.latitude || 0}
-              longitude={watchedValues.longitude || 0}
-              onSelectLocation={(coords) => {
-                setValue("latitude", coords[0]);
-                setValue("longitude", coords[1]);
-              }}
-            />
-          </View>
+          <Controller
+            control={control}
+            name="latitude"
+            render={({ field: { value: latitude } }) => (
+              <Controller
+                control={control}
+                name="longitude"
+                render={({ field: { value: longitude } }) => (
+                  <Map
+                    style={styles.map}
+                    latitude={latitude}
+                    longitude={longitude}
+                    onLocationChange={(lat, lng) => {
+                      setValue("latitude", lat);
+                      setValue("longitude", lng);
+                    }}
+                  />
+                )}
+              />
+            )}
+          />
+          {(errors.latitude || errors.longitude) && (
+            <Text style={styles.error}>Localização inválida</Text>
+          )}
         </View>
 
-        {/* Botão */}
+        {/* Botão Atualizar */}
         <Button
+          title="Atualizar Colmeia"
           onPress={handleSubmit(onSubmit)}
-          style={styles.submitButton}
-        >
-          <Text>Atualizar Colmeia</Text>
-        </Button>
+          style={styles.button}
+        />
       </View>
 
-      {/* Modal de Status */}
+      {/* Modal Status */}
       <Modal
         visible={showStatusModal}
-        transparent={true}
-        animationType="slide"
+        transparent
+        animationType="fade"
         onRequestClose={() => setShowStatusModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -312,25 +314,30 @@ function UpdateBeehive() {
             {statusOptions.map((option) => (
               <TouchableOpacity
                 key={option.value}
-                style={styles.modalOption}
+                style={[
+                  styles.modalOption,
+                  option.value === watchedValues.status && styles.selectedOption,
+                ]}
                 onPress={() => {
                   setValue("status", option.value);
                   setShowStatusModal(false);
                 }}
               >
-                <Text style={[
-                  styles.modalOptionText,
-                  { color: option.value ? getStatusColor(option.value) : "#374151" }
-                ]}>
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    option.value === watchedValues.status && styles.selectedOptionText,
+                  ]}
+                >
                   {option.label}
                 </Text>
               </TouchableOpacity>
             ))}
             <TouchableOpacity
-              style={styles.modalCancel}
+              style={[styles.modalOption, styles.cancelOption]}
               onPress={() => setShowStatusModal(false)}
             >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
+              <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -343,8 +350,6 @@ function UpdateBeehive() {
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
-          locale="pt-BR"
-          maximumDate={new Date()}
         />
       )}
     </ScrollView>
@@ -354,156 +359,142 @@ function UpdateBeehive() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#6B7280",
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    padding: 24,
-    paddingBottom: 16,
+    padding: 20,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#111827",
-    textAlign: "center",
+    color: "#333",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
-    textAlign: "center",
+    color: "#666",
   },
   form: {
-    padding: 24,
-    paddingTop: 0,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  halfWidth: {
-    flex: 1,
+    padding: 20,
   },
   row: {
     flexDirection: "row",
     gap: 16,
   },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  halfWidth: {
+    flex: 1,
+  },
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
+    fontWeight: "500",
+    color: "#333",
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    padding: 16,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
-    color: "#111827",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    color: "#333",
+    backgroundColor: "#fff",
   },
   textarea: {
     height: 100,
     textAlignVertical: "top",
   },
   selectInput: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#fff",
   },
   selectText: {
     fontSize: 16,
-    fontWeight: "500",
-  },
-  mapContainer: {
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
   },
   error: {
-    color: "#EF4444",
-    fontSize: 12,
+    color: "#ef4444",
+    fontSize: 14,
     marginTop: 4,
-    marginLeft: 4,
   },
-  submitButton: {
-    marginTop: 32,
+  mapContainer: {
+    marginBottom: 20,
+  },
+  map: {
+    height: 200,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  button: {
+    backgroundColor: "#eead2d",
+    marginTop: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 40,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxWidth: 400,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 16,
     textAlign: "center",
-    marginBottom: 20,
   },
   modalOption: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: "#e0e0e0",
+  },
+  selectedOption: {
+    backgroundColor: "#f3f4f6",
   },
   modalOptionText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+  },
+  selectedOptionText: {
+    color: "#eead2d",
+    fontWeight: "600",
+  },
+  cancelOption: {
+    borderBottomWidth: 0,
+    marginTop: 8,
+  },
+  cancelText: {
+    color: "#ef4444",
     fontSize: 16,
     fontWeight: "500",
     textAlign: "center",
   },
-  modalCancel: {
-    marginTop: 20,
-    paddingVertical: 16,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 12,
-  },
-  modalCancelText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#6B7280",
-    textAlign: "center",
-  },
 });
 
-export default UpdateBeehive;
+export default UpdateBeehive; 

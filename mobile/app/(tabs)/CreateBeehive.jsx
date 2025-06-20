@@ -1,26 +1,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { 
-  Alert, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  Platform 
+import {
+    Alert,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
 import { createBeehive } from "../../api/beehiveApi.js";
 import Button from "../../components/Button.js";
-import Header from "../../components/Header.js";
 import Footer from "../../components/Footer.js";
+import Header from "../../components/Header.js";
 
 const schema = z.object({
   name: z.string().min(3, "Nome é obrigatório"),
@@ -30,14 +30,14 @@ const schema = z.object({
   observations: z.string().optional(),
   startDate: z.string().min(1, "Selecione a data de início."),
   status: z.string().min(1, "Selecione um status"),
-  latitude: z.number().min(2, "Localização inválida"),
-  longitude: z.number().min(2, "Localização inválida"),
+  latitude: z.number().min(-90).max(90, "Latitude inválida"),
+  longitude: z.number().min(-180).max(180, "Longitude inválida"),
 });
 
 function CreateBeehive() {
   const navigation = useNavigation();
   const [producerId, setProducerId] = useState(null);
-  const [coords, setCoords] = useState({ latitude: -15.7801, longitude: -47.9292 });
+  const [coords, setCoords] = useState({ latitude: -23.55052, longitude: -46.633308 }); // São Paulo
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -46,6 +46,7 @@ function CreateBeehive() {
   const {
     setValue,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -55,21 +56,36 @@ function CreateBeehive() {
       observations: "",
       startDate: "",
       status: "",
-      latitude: -15.7801,
-      longitude: -47.9292,
+      latitude: -23.55052,
+      longitude: -46.633308,
     },
   });
 
+  const watchedValues = watch();
+
   useEffect(() => {
     const loadUser = async () => {
-      const userData = await AsyncStorage.getItem("user");
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        setProducerId(Number(parsed.id));
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          const parsed = JSON.parse(userData);
+          setProducerId(Number(parsed.id));
+          
+          // Usar coordenadas do usuário se disponíveis
+          if (parsed.latitude && parsed.longitude) {
+            const userLat = Number(parsed.latitude);
+            const userLng = Number(parsed.longitude);
+            setCoords({ latitude: userLat, longitude: userLng });
+            setValue("latitude", userLat);
+            setValue("longitude", userLng);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar usuário:", error);
       }
     };
     loadUser();
-  }, []);
+  }, [setValue]);
 
   const onSubmit = async (data) => {
     if (!producerId) {
@@ -78,29 +94,46 @@ function CreateBeehive() {
     }
 
     try {
+      console.log("Dados do formulário:", data);
+      console.log("Status selecionado:", data.status);
+      console.log("Tipo do status:", typeof data.status);
+      console.log("Valor exato do status:", JSON.stringify(data.status));
+      console.log("Dados sendo enviados para criar colmeia:", { ...data, producerId });
+      
       await createBeehive({
         ...data,
         producerId,
       });
 
-      Alert.alert("Sucesso", "Colmeia criada com sucesso!");
-      navigation.navigate("BeehiveList");
+      Alert.alert("Sucesso", "Colmeia criada com sucesso!", [
+        {
+          text: "OK",
+          onPress: () => navigation.replace("Beehives")
+        }
+      ]);
     } catch (error) {
       console.error("Erro ao criar colmeia:", error);
+      if (error.response) {
+        console.error("Resposta do servidor:", error.response.data);
+        console.error("Status:", error.response.status);
+      }
       Alert.alert("Erro", "Falha ao criar colmeia.");
     }
   };
 
   const handleMapPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
+    console.log("Coordenadas selecionadas:", { latitude, longitude });
     setCoords({ latitude, longitude });
     setValue("latitude", latitude);
     setValue("longitude", longitude);
   };
 
   const handleStatusSelect = (status) => {
+    console.log("Status selecionado no modal:", status);
     setSelectedStatus(status);
     setValue("status", status);
+    console.log("Status definido no formulário:", status);
     setShowStatusPicker(false);
   };
 
@@ -225,8 +258,19 @@ function CreateBeehive() {
               }}
               onPress={handleMapPress}
             >
-              {coords.latitude !== -15.7801 && <Marker coordinate={coords} />}
+              <Marker coordinate={coords} />
             </MapView>
+            
+            {/* Informações das coordenadas */}
+            <View style={styles.coordinatesInfo}>
+              <Text style={styles.coordinatesText}>
+                Latitude: {coords.latitude.toFixed(6)}
+              </Text>
+              <Text style={styles.coordinatesText}>
+                Longitude: {coords.longitude.toFixed(6)}
+              </Text>
+            </View>
+            
             {errors.latitude && (
               <Text style={styles.error}>{errors.latitude.message}</Text>
             )}
@@ -236,7 +280,9 @@ function CreateBeehive() {
           </View>
 
           {/* Botão Adicionar */}
-          <Button title="Adicionar Colmeia" onPress={handleSubmit(onSubmit)} />
+          <Button onPress={handleSubmit(onSubmit)} >
+            <Text>Adicionar Colmeia</Text>
+          </Button>
         </View>
       </ScrollView>
 
@@ -247,39 +293,40 @@ function CreateBeehive() {
             <Text style={styles.modalTitle}>Selecione o Status</Text>
             <TouchableOpacity 
               style={styles.modalOption}
-              onPress={() => handleStatusSelect("Ativa")}
+              onPress={() => handleStatusSelect("ativa")}
             >
               <Text style={styles.modalOptionText}>Ativa</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.modalOption}
-              onPress={() => handleStatusSelect("Em Manutenção")}
+              onPress={() => handleStatusSelect("em manutenção")}
             >
               <Text style={styles.modalOptionText}>Em Manutenção</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.modalOption}
-              onPress={() => handleStatusSelect("Abandonada")}
+              onPress={() => handleStatusSelect("abandonada")}
             >
               <Text style={styles.modalOptionText}>Abandonada</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.modalCancel}
+              style={[styles.modalOption, styles.cancelOption]}
               onPress={() => setShowStatusPicker(false)}
             >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
+              <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* DateTimePicker */}
+      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
           value={selectedDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
+          locale="pt-BR"
           maximumDate={new Date()}
         />
       )}
@@ -296,13 +343,18 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+    padding: 16,
   },
   header: {
-    padding: 20,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   title: {
     fontSize: 24,
@@ -313,47 +365,53 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: "#666",
-    textAlign: "center",
   },
   form: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
     padding: 20,
-    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   inputGroup: {
-    gap: 8,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "500",
     color: "#333",
-    marginBottom: 4,
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#e0e0e0",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: "#333",
     backgroundColor: "#fff",
   },
   textarea: {
     height: 100,
-    paddingTop: 12,
+    textAlignVertical: "top",
   },
   rowContainer: {
     flexDirection: "row",
-    gap: 12,
+    gap: 16,
+    marginBottom: 16,
   },
   halfWidth: {
     flex: 1,
-    gap: 8,
   },
   selectInput: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#e0e0e0",
     borderRadius: 8,
     padding: 12,
     backgroundColor: "#fff",
@@ -367,20 +425,21 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   mapContainer: {
-    gap: 8,
+    marginBottom: 20,
   },
   mapSubtitle: {
     fontSize: 14,
     color: "#666",
-    fontStyle: "italic",
+    marginBottom: 8,
   },
   map: {
     height: 200,
     borderRadius: 8,
+    marginBottom: 8,
   },
   error: {
-    color: "#dc2626",
-    fontSize: 12,
+    color: "#ef4444",
+    fontSize: 14,
     marginTop: 4,
   },
   modalOverlay: {
@@ -398,34 +457,46 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     width: "80%",
-    maxWidth: 300,
+    maxWidth: 400,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 16,
+    fontWeight: "600",
     color: "#333",
+    marginBottom: 16,
+    textAlign: "center",
   },
   modalOption: {
-    padding: 12,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#e0e0e0",
   },
   modalOptionText: {
     fontSize: 16,
     color: "#333",
     textAlign: "center",
   },
-  modalCancel: {
-    padding: 12,
+  cancelOption: {
+    borderBottomWidth: 0,
     marginTop: 8,
   },
-  modalCancelText: {
+  cancelText: {
+    color: "#ef4444",
     fontSize: 16,
-    color: "#666",
+    fontWeight: "500",
     textAlign: "center",
+  },
+  coordinatesInfo: {
+    backgroundColor: "#f8f9fa",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  coordinatesText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
   },
 });
 
-export default CreateBeehive;
+export default CreateBeehive; 

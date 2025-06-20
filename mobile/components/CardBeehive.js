@@ -1,9 +1,12 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { formatDate } from "../utils/formatDate";
-import { Map } from "./Map";
+import Map from "./Map";
 
 function CardBeehive({ beehive, ...props }) {
+  const navigation = useNavigation();
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'ativo':
@@ -19,8 +22,12 @@ function CardBeehive({ beehive, ...props }) {
 
   const statusStyle = getStatusColor(beehive.status);
 
+  const handlePress = () => {
+    navigation.navigate("BeehiveDetails", { id: beehive.id });
+  };
+
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
       {/* Mapa */}
       <View style={styles.mapContainer}>
         <Map {...props} style={{ width: "100%", height: "100%" }} />
@@ -56,7 +63,7 @@ function CardBeehive({ beehive, ...props }) {
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

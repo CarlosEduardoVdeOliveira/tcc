@@ -1,4 +1,3 @@
-import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthProvider } from "../contexts/auth.js";
 import { useAuth } from "../hooks/useAuth.js";
@@ -42,13 +41,11 @@ function AppRoutes() {
   );
 }
 
-function index() {
+function Index() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <AppRoutes />
-      </NavigationContainer>
+      <AppRoutes />
     </AuthProvider>
   );
 }
-export default index;
+export default Index;

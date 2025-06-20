@@ -1,24 +1,25 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  Modal,
+    Alert,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
 import { getUser, updateUser } from "../../api/userApi.js";
-import { Button } from "../../components/Button";
-import { Map } from "../../components/Map";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import Button from "../../components/Button.js";
+import Map from "../../components/Map.js";
 
 const isValidCpfCnpj = (value) => {
   const onlyNumbers = value.replace(/\D/g, "");
@@ -28,11 +29,13 @@ const isValidCpfCnpj = (value) => {
 const schema = z.object({
   name: z.string().min(3, "Nome é obrigatório"),
   email: z.string().email("E-mail inválido"),
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
+  password: z.string().optional().refine((val) => !val || val.length >= 6, {
+    message: "A senha deve ter no mínimo 6 caracteres"
+  }),
   startDate: z.string().min(1, "Selecione a data de início."),
   status: z.string().min(1, "Selecione um status"),
-  latitude: z.number().refine((val) => val !== 0, "Localização inválida"),
-  longitude: z.number().refine((val) => val !== 0, "Localização inválida"),
+  latitude: z.number().min(-90).max(90, "Latitude inválida"),
+  longitude: z.number().min(-180).max(180, "Longitude inválida"),
   cpfCnpj: z
     .string()
     .min(1, "Campo obrigatório")
@@ -68,8 +71,8 @@ function UpdateProfile() {
       password: "",
       startDate: "",
       status: "",
-      latitude: 0,
-      longitude: 0,
+      latitude: -23.55052,
+      longitude: -46.633308,
     },
   });
 
@@ -105,6 +108,7 @@ function UpdateProfile() {
         setValue("cpfCnpj", userData.cpfCnpj || "");
         setValue("startDate", userData.startDate?.substring(0, 10) || "");
         setValue("status", userData.status || "");
+        
         const lat = Number(userData.latitude) || -23.55052;
         const lng = Number(userData.longitude) || -46.633308;
         setValue("latitude", lat);
@@ -114,25 +118,100 @@ function UpdateProfile() {
           setSelectedDate(new Date(userData.startDate));
         }
       } catch (error) {
+        console.error("Erro ao carregar usuário:", error);
         Alert.alert("Erro", "Não foi possível carregar os dados do usuário.");
       }
     }
     loadUser();
-  }, []);
+  }, [navigation, setValue]);
+
+  // Função para testar a conexão com a API
+  const testApiConnection = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem("user");
+      const user = userJson ? JSON.parse(userJson) : null;
+      if (!user?.id) {
+        return false;
+      }
+
+      await getUser(user.id);
+      return true;
+    } catch (error) {
+      console.error("Erro no teste de conexão:", error);
+      return false;
+    }
+  };
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
+      // Verificar token primeiro
+      const token = await AsyncStorage.getItem("user_token");
+      if (!token) {
+        Alert.alert("Erro", "Token de autenticação não encontrado. Faça login novamente.");
+        navigation.navigate("Login");
+        return;
+      }
+
+      // Testar conexão primeiro
+      const connectionOk = await testApiConnection();
+      if (!connectionOk) {
+        Alert.alert("Erro", "Não foi possível conectar com o servidor.");
+        return;
+      }
+
       const userJson = await AsyncStorage.getItem("user");
       const user = userJson ? JSON.parse(userJson) : null;
       if (!user?.id) {
         navigation.navigate("Login");
         return;
       }
-      await updateUser({ id: user.id, ...data });
+
+      // Remover senha se estiver vazia
+      const updateData = { ...data };
+      if (!updateData.password) {
+        delete updateData.password;
+      }
+
+      // Formatar CPF/CNPJ removendo caracteres especiais
+      if (updateData.cpfCnpj) {
+        updateData.cpfCnpj = updateData.cpfCnpj.replace(/\D/g, "");
+      }
+
+      // Garantir que as coordenadas sejam números
+      updateData.latitude = Number(updateData.latitude);
+      updateData.longitude = Number(updateData.longitude);
+
+      // Garantir que a data esteja no formato correto
+      if (updateData.startDate) {
+        const date = new Date(updateData.startDate);
+        if (!isNaN(date.getTime())) {
+          updateData.startDate = date.toISOString().split('T')[0];
+        }
+      }
+
+      // Garantir que o status seja válido
+      if (!updateData.status || updateData.status.trim() === "") {
+        delete updateData.status;
+      }
+
+      await updateUser(updateData, user.id);
+      
+      // Buscar os dados atualizados da API
+      const updatedResponse = await getUser(user.id);
+      const updatedUserData = updatedResponse.data;
+      
+      // Atualizar o AsyncStorage com os dados mais recentes da API
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUserData));
+      
       Alert.alert("Sucesso", "Perfil atualizado com sucesso!");
-      navigation.navigate("Home");
+      navigation.replace("Profile");
     } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+      if (error.response) {
+        console.error("Resposta do servidor:", error.response.data);
+        console.error("Status:", error.response.status);
+      }
       Alert.alert("Erro", "Não foi possível atualizar o perfil.");
     } finally {
       setLoading(false);
@@ -146,6 +225,13 @@ function UpdateProfile() {
       const formattedDate = selectedDate.toISOString().split('T')[0];
       setValue("startDate", formattedDate);
     }
+  };
+
+  // Função para formatar data no formato brasileiro
+  const formatDateToBrazilian = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
   };
 
   const getStatusColor = (status) => {
@@ -232,7 +318,7 @@ function UpdateProfile() {
           </View>
 
           <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Senha</Text>
+            <Text style={styles.label}>Senha (opcional)</Text>
             <Controller
               control={control}
               name="password"
@@ -240,7 +326,7 @@ function UpdateProfile() {
                 <View style={styles.passwordContainer}>
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    placeholder="Digite uma senha"
+                    placeholder="Deixe em branco para manter a senha atual"
                     value={value}
                     onChangeText={onChange}
                     placeholderTextColor="#9CA3AF"
@@ -251,9 +337,7 @@ function UpdateProfile() {
                     onPress={() => setViewPassword(!viewPassword)}
                     style={styles.eyeButton}
                   >
-                    <Text style={styles.eyeIcon}>
-                      {viewPassword ? "🙈" : "🐵"}
-                    </Text>
+                    <Icon name={viewPassword ? "eye-off" : "eye"} size={24} color="#d1d1d1" />
                   </TouchableOpacity>
                 </View>
               )}
@@ -296,17 +380,25 @@ function UpdateProfile() {
 
           <View style={[styles.inputGroup, styles.halfWidth]}>
             <Text style={styles.label}>Data de Início</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={[
-                styles.selectText,
-                { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
-              ]}>
-                {watchedValues.startDate || "Selecione a data"}
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                style={[styles.selectInput, { flex: 1 }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={[
+                  styles.selectText,
+                  { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
+                ]}>
+                  {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                style={{ marginLeft: 8 }}
+              >
+                <Icon name="calendar" size={24} color="#d1d1d1" />
+              </TouchableOpacity>
+            </View>
             {errors.startDate && <Text style={styles.error}>{errors.startDate.message}</Text>}
           </View>
         </View>
@@ -316,8 +408,9 @@ function UpdateProfile() {
           <Text style={styles.label}>Localização</Text>
           <View style={styles.mapContainer}>
             <Map
-              latitude={watchedValues.latitude}
-              longitude={watchedValues.longitude}
+              key={`${watchedValues.latitude}-${watchedValues.longitude}`}
+              latitude={watchedValues.latitude || -23.55052}
+              longitude={watchedValues.longitude || -46.633308}
               onSelectLocation={(coords) => {
                 setValue("latitude", coords[0]);
                 setValue("longitude", coords[1]);
@@ -326,21 +419,20 @@ function UpdateProfile() {
           </View>
           <View style={styles.coordinatesInfo}>
             <Text style={styles.coordinatesText}>
-              <Text style={styles.coordinatesLabel}>Latitude:</Text> {watchedValues.latitude || "Não definida"}
+              <Text style={styles.coordinatesLabel}>Latitude:</Text> {watchedValues.latitude ? watchedValues.latitude.toFixed(6) : "Não definida"}
             </Text>
             <Text style={styles.coordinatesText}>
-              <Text style={styles.coordinatesLabel}>Longitude:</Text> {watchedValues.longitude || "Não definida"}
+              <Text style={styles.coordinatesLabel}>Longitude:</Text> {watchedValues.longitude ? watchedValues.longitude.toFixed(6) : "Não definida"}
             </Text>
           </View>
         </View>
 
         {/* Botão */}
         <Button
-          title={loading ? "Atualizando..." : "Atualizar Perfil"}
           onPress={handleSubmit(onSubmit)}
           style={styles.submitButton}
           disabled={loading}
-        />
+        ><Text>{loading ? "Atualizando..." : "Atualizar Perfil"}</Text></Button>
       </View>
 
       {/* Modal de Status */}
@@ -387,6 +479,8 @@ function UpdateProfile() {
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
+          locale="pt-BR"
+          maximumDate={new Date()}
         />
       )}
     </ScrollView>
@@ -459,9 +553,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 16,
     zIndex: 1,
-  },
-  eyeIcon: {
-    fontSize: 20,
   },
   selectInput: {
     backgroundColor: "#FFFFFF",

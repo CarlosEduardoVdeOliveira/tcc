@@ -1,6 +1,7 @@
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { createContext, useEffect, useState } from "react";
+import API_CONFIG from "../constants/config.js";
 
 export const AuthContext = createContext({});
 
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }) => {
 
   const signin = async (email, password) => {
     try {
-      const response = await axios.post("http://localhost:3000/api/v1/login", {
+      const response = await axios.post(`${API_CONFIG.BASE_URL}/login`, {
         email,
         password,
       });

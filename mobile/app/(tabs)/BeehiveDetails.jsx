@@ -1,27 +1,25 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
-import { 
-  Alert, 
-  ScrollView, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  StyleSheet 
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 import { deleteActivity, getActivity } from "../../api/activityApi.js";
 import { deleteBeehive, getBeehive } from "../../api/beehiveApi.js";
-import { deleteDisease, getDisease } from "../../api/diseaseApi.js";
-import { deleteFood, getFood } from "../../api/foodApi.js";
+import { getDisease } from "../../api/diseaseApi.js";
+import { getFood } from "../../api/foodApi.js";
 import {
-  deleteProductionHoney,
-  getProductionHoney,
+  getProductionHoney
 } from "../../api/productionHoneyApi.js";
 import {
-  deleteTemperatureHumidity,
-  getTemperatureHumidity,
+  getTemperatureHumidity
 } from "../../api/temperatureHumidity.js";
 
 import Footer from "../../components/Footer.js";
@@ -31,9 +29,15 @@ import FormFood from "../../components/FormFood.js";
 import FormProductionHoney from "../../components/FormProductionHoney.js";
 import FormTemperatureHumidity from "../../components/FormTemperatureHumidity.js";
 import Header from "../../components/Header.js";
+import Map from "../../components/Map.js";
 import Modal from "../../components/Modal.js";
-import { Map } from "../../components/Map.js";
 import { formatDate } from "../../utils/formatDate.js";
+
+// Função para formatar qualidade para exibição
+const formatQuality = (quality) => {
+  if (!quality) return "";
+  return quality.charAt(0).toUpperCase() + quality.slice(1);
+};
 
 function BeehiveDetails() {
   const route = useRoute();
@@ -44,6 +48,15 @@ function BeehiveDetails() {
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+
+  // Estados para paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activitiesPage, setActivitiesPage] = useState(1);
+  const [foodsPage, setFoodsPage] = useState(1);
+  const [diseasesPage, setDiseasesPage] = useState(1);
+  const [productsPage, setProductsPage] = useState(1);
+  const [measurementsPage, setMeasurementsPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   const [activities, setActivities] = useState([]);
   const [foods, setFoods] = useState([]);
@@ -113,6 +126,14 @@ function BeehiveDetails() {
     fetchData();
   }, [id, navigation]);
 
+  // Recarregar dados quando a tela for focada
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Tela focada, recarregando dados");
+      reloadData();
+    }, [id])
+  );
+
   const handleDelete = async (itemId, deleteFunc) => {
     try {
       await deleteFunc(itemId);
@@ -124,15 +145,187 @@ function BeehiveDetails() {
     }
   };
 
-  const handleOpenModal = (section) => setOpenModal(section);
-  const handleCloseModal = () => {
-    setOpenModal(null);
-    setEditingItem(null);
+  const handleDeleteActivity = async (activityId) => {
+    try {
+      console.log("Deletando atividade:", activityId);
+      await deleteActivity(activityId);
+      console.log("Atividade deletada com sucesso");
+      // Recarregar dados
+      reloadData();
+    } catch (error) {
+      console.error("Erro ao deletar atividade:", error);
+      Alert.alert("Erro", "Falha ao excluir atividade.");
+    }
   };
 
-  const handleEdit = (id, section) => {
-    setEditingItem({ id, section });
+  const handleDeleteFood = async (foodId) => {
+    try {
+      console.log("Deletando alimento:", foodId);
+      await deleteFood(foodId);
+      console.log("Alimento deletado com sucesso");
+      // Recarregar dados
+      reloadData();
+    } catch (error) {
+      console.error("Erro ao deletar alimento:", error);
+      Alert.alert("Erro", "Falha ao excluir alimento.");
+    }
+  };
+
+  const handleDeleteDisease = async (diseaseId) => {
+    try {
+      console.log("Deletando doença/praga:", diseaseId);
+      await deleteDisease(diseaseId);
+      console.log("Doença/praga deletada com sucesso");
+      // Recarregar dados
+      reloadData();
+    } catch (error) {
+      console.error("Erro ao deletar doença/praga:", error);
+      Alert.alert("Erro", "Falha ao excluir doença/praga.");
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      console.log("Deletando produto:", productId);
+      await deleteProductionHoney(productId);
+      console.log("Produto deletado com sucesso");
+      // Recarregar dados
+      reloadData();
+    } catch (error) {
+      console.error("Erro ao deletar produto:", error);
+      Alert.alert("Erro", "Falha ao excluir produto.");
+    }
+  };
+
+  const handleDeleteMeasurement = async (measurementId) => {
+    try {
+      console.log("Deletando medição:", measurementId);
+      await deleteTemperatureHumidity(measurementId);
+      console.log("Medição deletada com sucesso");
+      // Recarregar dados
+      reloadData();
+    } catch (error) {
+      console.error("Erro ao deletar medição:", error);
+      Alert.alert("Erro", "Falha ao excluir medição.");
+    }
+  };
+
+  const handleOpenModal = (section) => {
     setOpenModal(section);
+  };
+  
+  const handleCloseModal = () => {
+    console.log("Fechando modal e recarregando dados");
+    setOpenModal(null);
+    setEditingItem(null);
+    // Recarregar dados após fechar o modal
+    reloadData();
+  };
+
+  const handleEdit = (id, section, itemData) => {
+    setEditingItem({ id, section, data: itemData });
+    setOpenModal(section);
+  };
+
+  // Funções para paginação
+  const getPaginatedItems = (items, page) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return items.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (items) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleActivitiesPageChange = (newPage) => {
+    setActivitiesPage(newPage);
+  };
+
+  const handleFoodsPageChange = (newPage) => {
+    setFoodsPage(newPage);
+  };
+
+  const handleDiseasesPageChange = (newPage) => {
+    setDiseasesPage(newPage);
+  };
+
+  const handleProductsPageChange = (newPage) => {
+    setProductsPage(newPage);
+  };
+
+  const handleMeasurementsPageChange = (newPage) => {
+    setMeasurementsPage(newPage);
+  };
+
+  const reloadData = async () => {
+    setLoading(true);
+    try {
+      console.log("Recarregando dados da colmeia:", id);
+      
+      const [
+        { data: beehiveData },
+        { data: activitiesData },
+        { data: foodsData },
+        { data: diseasesData },
+        { data: productionHoneyData },
+        { data: temperatureHumidityData },
+      ] = await Promise.all([
+        getBeehive(id),
+        getActivity(id),
+        getFood(id),
+        getDisease(id),
+        getProductionHoney(id),
+        getTemperatureHumidity(id),
+      ]);
+
+      console.log("Dados recebidos:", {
+        beehive: beehiveData,
+        activities: activitiesData,
+        foods: foodsData,
+        diseases: diseasesData,
+        productionHoney: productionHoneyData,
+        temperatureHumidity: temperatureHumidityData,
+      });
+
+      setBeehive(beehiveData);
+      
+      const sortedActivities = Array.isArray(activitiesData) 
+        ? activitiesData.sort((a, b) => new Date(b.dateActivity) - new Date(a.dateActivity))
+        : [];
+      setActivities(sortedActivities);
+      
+      const sortedFoods = Array.isArray(foodsData) 
+        ? foodsData.sort((a, b) => new Date(b.dateFeeding) - new Date(a.dateFeeding))
+        : [];
+      setFoods(sortedFoods);
+      
+      const sortedDiseases = Array.isArray(diseasesData) 
+        ? diseasesData.sort((a, b) => new Date(b.dateDiagnosis) - new Date(a.dateDiagnosis))
+        : [];
+      setDiseases(sortedDiseases);
+      
+      const sortedProductionHoneys = Array.isArray(productionHoneyData) 
+        ? productionHoneyData.sort((a, b) => new Date(b.dateCollection) - new Date(a.dateCollection))
+        : [];
+      setProductionHoneys(sortedProductionHoneys);
+      
+      const sortedTemperatureHumidities = Array.isArray(temperatureHumidityData) 
+        ? temperatureHumidityData.sort((a, b) => new Date(b.dateMeasurement) - new Date(a.dateMeasurement))
+        : [];
+      setTemperatureHumidities(sortedTemperatureHumidities);
+      
+      console.log("Dados processados e ordenados com sucesso");
+    } catch (error) {
+      console.error("Erro ao recarregar dados:", error);
+      console.error("Detalhes do erro:", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -232,7 +425,7 @@ function BeehiveDetails() {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => navigation.navigate("AtualizarColmeia", { id })}
+            onPress={() => navigation.navigate("UpdateBeehive", { id })}
           >
             <Icon name="pencil" size={16} color="#fff" />
             <Text style={styles.editButtonText}>Editar</Text>
@@ -255,191 +448,485 @@ function BeehiveDetails() {
           </TouchableOpacity>
         </View>
 
-        {/* Seções de dados */}
-        <View style={styles.sectionsContainer}>
-          {/* Atividades */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Atividades</Text>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleOpenModal("Atividade")}
-              >
-                <Icon name="add" size={20} color="#fff" />
-                <Text style={styles.addButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-            <SimpleDataTable 
-              data={activities} 
-              columns={[
-                { key: "dateActivity", header: "Data", render: (value) => formatDate(value) },
-                { key: "typeActivity", header: "Tipo" },
-                { key: "descriptions", header: "Descrição" }
-              ]}
-              onEdit={(id) => handleEdit(id, "Atividade")} 
-              onDelete={(id) => handleDelete(id, deleteActivity)} 
-              emptyMessage="Nenhuma atividade encontrada."
-            />
+        {/* Seção de Atividades */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Atividades</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => handleOpenModal("Atividade")}
+            >
+              <Icon name="add" size={16} color="#fff" />
+              <Text style={styles.addButtonText}>Adicionar Atividade</Text>
+            </TouchableOpacity>
           </View>
+          
+          {activities.length > 0 ? (
+            <>
+              {getPaginatedItems(activities, activitiesPage).map((activity, index) => (
+                <View key={activity.id || index} style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.itemDate}>{formatDate(activity.dateActivity)}</Text>
+                    <Text style={styles.itemType}>{activity.typeActivity}</Text>
+                  </View>
+                  <Text style={styles.itemDescription}>{activity.descriptions}</Text>
+                  {activity.observations && (
+                    <Text style={styles.itemObservations}>{activity.observations}</Text>
+                  )}
+                  
+                  {/* Botões de ação */}
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleEdit(activity.id, "Atividade", activity)}
+                    >
+                      <Icon name="pencil" size={16} color="#22c55e" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        Alert.alert(
+                          "Excluir Atividade",
+                          "Tem certeza que deseja excluir esta atividade?",
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Excluir",
+                              style: "destructive",
+                              onPress: () => handleDeleteActivity(activity.id),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Icon name="trash" size={16} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              
+              {/* Controles de paginação */}
+              {getTotalPages(activities) > 1 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity
+                    style={[styles.paginationButton, activitiesPage === 1 && styles.paginationButtonDisabled]}
+                    onPress={() => handleActivitiesPageChange(activitiesPage - 1)}
+                    disabled={activitiesPage === 1}
+                  >
+                    <Text style={[styles.paginationText, activitiesPage === 1 && styles.paginationTextDisabled]}>
+                      Anterior
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.paginationInfo}>
+                    Página {activitiesPage} de {getTotalPages(activities)}
+                  </Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.paginationButton, activitiesPage === getTotalPages(activities) && styles.paginationButtonDisabled]}
+                    onPress={() => handleActivitiesPageChange(activitiesPage + 1)}
+                    disabled={activitiesPage === getTotalPages(activities)}
+                  >
+                    <Text style={[styles.paginationText, activitiesPage === getTotalPages(activities) && styles.paginationTextDisabled]}>
+                      Próxima
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Nenhuma atividade encontrada.</Text>
+          )}
+        </View>
 
-          {/* Comidas */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Comidas</Text>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleOpenModal("Comidas")}
-              >
-                <Icon name="add" size={20} color="#fff" />
-                <Text style={styles.addButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-            <SimpleDataTable 
-              data={foods} 
-              columns={[
-                { key: "dateFeeding", header: "Data", render: (value) => formatDate(value) },
-                { key: "typeFood", header: "Tipo" },
-                { key: "amount", header: "Quantidade" }
-              ]}
-              onEdit={(id) => handleEdit(id, "Comidas")} 
-              onDelete={(id) => handleDelete(id, deleteFood)} 
-              emptyMessage="Nenhum alimento encontrado."
-            />
+        {/* Seção de Alimentos */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Alimentos</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => handleOpenModal("Alimentos")}
+            >
+              <Icon name="add" size={16} color="#fff" />
+              <Text style={styles.addButtonText}>Adicionar Alimento</Text>
+            </TouchableOpacity>
           </View>
+          
+          {foods.length > 0 ? (
+            <>
+              {getPaginatedItems(foods, foodsPage).map((food, index) => (
+                <View key={food.id || index} style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.itemDate}>{formatDate(food.dateFeeding)}</Text>
+                    <Text style={styles.itemType}>{food.typeFood}</Text>
+                  </View>
+                  <Text style={styles.itemDescription}>Quantidade: {food.amount}</Text>
+                  {food.observations && (
+                    <Text style={styles.itemObservations}>{food.observations}</Text>
+                  )}
+                  
+                  {/* Botões de ação */}
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleEdit(food.id, "Alimentos", food)}
+                    >
+                      <Icon name="pencil" size={16} color="#22c55e" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        Alert.alert(
+                          "Excluir Alimento",
+                          "Tem certeza que deseja excluir este alimento?",
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Excluir",
+                              style: "destructive",
+                              onPress: () => handleDeleteFood(food.id),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Icon name="trash" size={16} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              
+              {/* Controles de paginação */}
+              {getTotalPages(foods) > 1 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity
+                    style={[styles.paginationButton, foodsPage === 1 && styles.paginationButtonDisabled]}
+                    onPress={() => handleFoodsPageChange(foodsPage - 1)}
+                    disabled={foodsPage === 1}
+                  >
+                    <Text style={[styles.paginationText, foodsPage === 1 && styles.paginationTextDisabled]}>
+                      Anterior
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.paginationInfo}>
+                    Página {foodsPage} de {getTotalPages(foods)}
+                  </Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.paginationButton, foodsPage === getTotalPages(foods) && styles.paginationButtonDisabled]}
+                    onPress={() => handleFoodsPageChange(foodsPage + 1)}
+                    disabled={foodsPage === getTotalPages(foods)}
+                  >
+                    <Text style={[styles.paginationText, foodsPage === getTotalPages(foods) && styles.paginationTextDisabled]}>
+                      Próxima
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Nenhum alimento encontrado.</Text>
+          )}
+        </View>
 
-          {/* Doenças/Pragas */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Doenças/Pragas</Text>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleOpenModal("Doenças/Pragas")}
-              >
-                <Icon name="add" size={20} color="#fff" />
-                <Text style={styles.addButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-            <SimpleDataTable 
-              data={diseases} 
-              columns={[
-                { key: "dateDiagnosis", header: "Data", render: (value) => formatDate(value) },
-                { key: "diseasePrague", header: "Doença/Praga" },
-                { key: "treatment", header: "Tratamento" }
-              ]}
-              onEdit={(id) => handleEdit(id, "Doenças/Pragas")} 
-              onDelete={(id) => handleDelete(id, deleteDisease)} 
-              emptyMessage="Nenhuma doença/praga encontrada."
-            />
+        {/* Seção de Doenças/Pragas */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Doenças/Pragas</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => handleOpenModal("Doenças/Pragas")}
+            >
+              <Icon name="add" size={16} color="#fff" />
+              <Text style={styles.addButtonText}>Adicionar Doença/Praga</Text>
+            </TouchableOpacity>
           </View>
+          
+          {diseases.length > 0 ? (
+            <>
+              {getPaginatedItems(diseases, diseasesPage).map((disease, index) => (
+                <View key={disease.id || index} style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.itemDate}>{formatDate(disease.dateDiagnosis)}</Text>
+                    <Text style={styles.itemType}>{disease.diseasePrague}</Text>
+                  </View>
+                  <Text style={styles.itemDescription}>Tratamento: {disease.treatment}</Text>
+                  {disease.observations && (
+                    <Text style={styles.itemObservations}>{disease.observations}</Text>
+                  )}
+                  
+                  {/* Botões de ação */}
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleEdit(disease.id, "Doenças/Pragas", disease)}
+                    >
+                      <Icon name="pencil" size={16} color="#22c55e" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        Alert.alert(
+                          "Excluir Doença/Praga",
+                          "Tem certeza que deseja excluir esta doença/praga?",
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Excluir",
+                              style: "destructive",
+                              onPress: () => handleDeleteDisease(disease.id),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Icon name="trash" size={16} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              
+              {/* Controles de paginação */}
+              {getTotalPages(diseases) > 1 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity
+                    style={[styles.paginationButton, diseasesPage === 1 && styles.paginationButtonDisabled]}
+                    onPress={() => handleDiseasesPageChange(diseasesPage - 1)}
+                    disabled={diseasesPage === 1}
+                  >
+                    <Text style={[styles.paginationText, diseasesPage === 1 && styles.paginationTextDisabled]}>
+                      Anterior
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.paginationInfo}>
+                    Página {diseasesPage} de {getTotalPages(diseases)}
+                  </Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.paginationButton, diseasesPage === getTotalPages(diseases) && styles.paginationButtonDisabled]}
+                    onPress={() => handleDiseasesPageChange(diseasesPage + 1)}
+                    disabled={diseasesPage === getTotalPages(diseases)}
+                  >
+                    <Text style={[styles.paginationText, diseasesPage === getTotalPages(diseases) && styles.paginationTextDisabled]}>
+                      Próxima
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Nenhuma doença/praga encontrada.</Text>
+          )}
+        </View>
 
-          {/* Produtos */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Produtos</Text>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleOpenModal("Produtos")}
-              >
-                <Icon name="add" size={20} color="#fff" />
-                <Text style={styles.addButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-            <SimpleDataTable 
-              data={productionHoneys} 
-              columns={[
-                { key: "dateCollection", header: "Data", render: (value) => formatDate(value) },
-                { key: "amount", header: "Quantidade" },
-                { key: "quality", header: "Qualidade" }
-              ]}
-              onEdit={(id) => handleEdit(id, "Produtos")} 
-              onDelete={(id) => handleDelete(id, deleteProductionHoney)} 
-              emptyMessage="Nenhum produto encontrado."
-            />
+        {/* Seção de Produtos */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Produtos</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => handleOpenModal("Produtos")}
+            >
+              <Icon name="add" size={16} color="#fff" />
+              <Text style={styles.addButtonText}>Adicionar Produto</Text>
+            </TouchableOpacity>
           </View>
+          
+          {productionHoneys.length > 0 ? (
+            <>
+              {getPaginatedItems(productionHoneys, productsPage).map((product, index) => (
+                <View key={product.id || index} style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.itemDate}>{formatDate(product.dateCollection)}</Text>
+                    <Text style={styles.itemType}>{formatQuality(product.quality)}</Text>
+                  </View>
+                  <Text style={styles.itemDescription}>Quantidade: {product.amount}</Text>
+                  {product.observations && (
+                    <Text style={styles.itemObservations}>{product.observations}</Text>
+                  )}
+                  
+                  {/* Botões de ação */}
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleEdit(product.id, "Produtos", product)}
+                    >
+                      <Icon name="pencil" size={16} color="#22c55e" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        Alert.alert(
+                          "Excluir Produto",
+                          "Tem certeza que deseja excluir este produto?",
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Excluir",
+                              style: "destructive",
+                              onPress: () => handleDeleteProduct(product.id),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Icon name="trash" size={16} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              
+              {/* Controles de paginação */}
+              {getTotalPages(productionHoneys) > 1 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity
+                    style={[styles.paginationButton, productsPage === 1 && styles.paginationButtonDisabled]}
+                    onPress={() => handleProductsPageChange(productsPage - 1)}
+                    disabled={productsPage === 1}
+                  >
+                    <Text style={[styles.paginationText, productsPage === 1 && styles.paginationTextDisabled]}>
+                      Anterior
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.paginationInfo}>
+                    Página {productsPage} de {getTotalPages(productionHoneys)}
+                  </Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.paginationButton, productsPage === getTotalPages(productionHoneys) && styles.paginationButtonDisabled]}
+                    onPress={() => handleProductsPageChange(productsPage + 1)}
+                    disabled={productsPage === getTotalPages(productionHoneys)}
+                  >
+                    <Text style={[styles.paginationText, productsPage === getTotalPages(productionHoneys) && styles.paginationTextDisabled]}>
+                      Próxima
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Nenhum produto encontrado.</Text>
+          )}
+        </View>
 
-          {/* Temperatura e Umidade */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Temperatura e Umidade</Text>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleOpenModal("Temperatura e Umidade")}
-              >
-                <Icon name="add" size={20} color="#fff" />
-                <Text style={styles.addButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-            <SimpleDataTable 
-              data={temperatureHumidities} 
-              columns={[
-                { key: "dateMeasurement", header: "Data", render: (value) => formatDate(value) },
-                { key: "internalTemperature", header: "Temp. Interna" },
-                { key: "humidityInternal", header: "Umidade" }
-              ]}
-              onEdit={(id) => handleEdit(id, "Temperatura e Umidade")} 
-              onDelete={(id) => handleDelete(id, deleteTemperatureHumidity)} 
-              emptyMessage="Nenhuma medição encontrada."
-            />
+        {/* Seção de Temperatura e Umidade */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Temperatura e Umidade</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => handleOpenModal("Temperatura e Umidade")}
+            >
+              <Icon name="add" size={16} color="#fff" />
+              <Text style={styles.addButtonText}>Adicionar Medição</Text>
+            </TouchableOpacity>
           </View>
+          
+          {temperatureHumidities.length > 0 ? (
+            <>
+              {getPaginatedItems(temperatureHumidities, measurementsPage).map((measurement, index) => (
+                <View key={measurement.id || index} style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.itemDate}>{formatDate(measurement.dateMeasurement)}</Text>
+                    <Text style={styles.itemType}>Medição</Text>
+                  </View>
+                  <View style={styles.measurementGrid}>
+                    <Text style={styles.measurementItem}>Temp. Interna: {measurement.internalTemperature}°C</Text>
+                    <Text style={styles.measurementItem}>Umidade Interna: {measurement.humidityInternal}%</Text>
+                    <Text style={styles.measurementItem}>Temp. Externa: {measurement.externalTemperature}°C</Text>
+                    <Text style={styles.measurementItem}>Umidade Externa: {measurement.humidityExternal}%</Text>
+                  </View>
+                  
+                  {/* Botões de ação */}
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleEdit(measurement.id, "Temperatura e Umidade", measurement)}
+                    >
+                      <Icon name="pencil" size={16} color="#22c55e" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        Alert.alert(
+                          "Excluir Medição",
+                          "Tem certeza que deseja excluir esta medição?",
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Excluir",
+                              style: "destructive",
+                              onPress: () => handleDeleteMeasurement(measurement.id),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Icon name="trash" size={16} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              
+              {/* Controles de paginação */}
+              {getTotalPages(temperatureHumidities) > 1 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity
+                    style={[styles.paginationButton, measurementsPage === 1 && styles.paginationButtonDisabled]}
+                    onPress={() => handleMeasurementsPageChange(measurementsPage - 1)}
+                    disabled={measurementsPage === 1}
+                  >
+                    <Text style={[styles.paginationText, measurementsPage === 1 && styles.paginationTextDisabled]}>
+                      Anterior
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.paginationInfo}>
+                    Página {measurementsPage} de {getTotalPages(temperatureHumidities)}
+                  </Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.paginationButton, measurementsPage === getTotalPages(temperatureHumidities) && styles.paginationButtonDisabled]}
+                    onPress={() => handleMeasurementsPageChange(measurementsPage + 1)}
+                    disabled={measurementsPage === getTotalPages(temperatureHumidities)}
+                  >
+                    <Text style={[styles.paginationText, measurementsPage === getTotalPages(temperatureHumidities) && styles.paginationTextDisabled]}>
+                      Próxima
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Nenhuma medição encontrada.</Text>
+          )}
         </View>
       </ScrollView>
 
-      {/* Modais */}
-      <Modal
-        visible={openModal !== null}
-        onClose={handleCloseModal}
-        title={`Adicionar ${openModal}`}
-      >
-        {openModal === "Atividade" && <FormActivity />}
-        {openModal === "Doenças/Pragas" && <FormDisease />}
-        {openModal === "Produtos" && <FormProductionHoney />}
-        {openModal === "Comidas" && <FormFood />}
-        {openModal === "Temperatura e Umidade" && <FormTemperatureHumidity />}
-      </Modal>
-
+      {/* Modal para formulários */}
+      {openModal && (
+        <Modal 
+          visible={true} 
+          onClose={handleCloseModal} 
+          title={`${editingItem ? 'Editar' : 'Adicionar'} ${openModal}`}
+        >
+          {openModal === "Atividade" && <FormActivity beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
+          {openModal === "Alimentos" && <FormFood beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
+          {openModal === "Doenças/Pragas" && <FormDisease beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
+          {openModal === "Produtos" && <FormProductionHoney beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
+          {openModal === "Temperatura e Umidade" && <FormTemperatureHumidity beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
+        </Modal>
+      )}
+      
       <Footer />
-    </View>
-  );
-}
-
-// Componente DataTable simplificado para React Native
-function SimpleDataTable({ data, columns, onEdit, onDelete, emptyMessage }) {
-  if (!data || data.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>{emptyMessage}</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.tableContainer}>
-      {data.slice(0, 5).map((item, index) => (
-        <View key={index} style={styles.tableRow}>
-          {columns.map((column, colIndex) => (
-            <View key={colIndex} style={styles.tableCell}>
-              <Text style={styles.cellLabel}>{column.header}</Text>
-              <Text style={styles.cellValue}>
-                {column.render ? column.render(item[column.key]) : item[column.key]}
-              </Text>
-            </View>
-          ))}
-          <View style={styles.rowActionButtons}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => onEdit(item.id)}
-            >
-              <Icon name="pencil" size={16} color="#10b981" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => onDelete(item.id)}
-            >
-              <Icon name="trash" size={16} color="#ef4444" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ))}
     </View>
   );
 }
@@ -456,14 +943,127 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e0e0e0",
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#333",
-    textAlign: "center",
   },
-  scrollContainer: {
-    flexGrow: 1,
+  beehiveCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
     padding: 16,
+    margin: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  beehiveInfo: {
+    marginBottom: 16,
+  },
+  beehiveName: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  beehiveType: {
+    fontSize: 16,
+    color: "#666",
+  },
+  infoGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  infoItem: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    alignSelf: "flex-start",
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  observationsContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 16,
+  },
+  observationsText: {
+    fontSize: 16,
+    color: "#333",
+    lineHeight: 24,
+  },
+  mapCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  map: {
+    height: 200,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+    marginVertical: 16,
+  },
+  editButton: {
+    backgroundColor: "#eead2d",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+  },
+  editButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  deleteButton: {
+    backgroundColor: "#ef4444",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   loadingContainer: {
     flex: 1,
@@ -474,139 +1074,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
-  beehiveCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  beehiveInfo: {
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  beehiveName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1f2937",
-    marginBottom: 4,
-  },
-  beehiveType: {
-    fontSize: 16,
-    color: "#6b7280",
-  },
-  infoGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  infoItem: {
-    flex: 1,
-    marginHorizontal: 8,
-  },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#6b7280",
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    color: "#1f2937",
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignSelf: "flex-start",
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  observationsContainer: {
-    marginTop: 8,
-  },
-  observationsText: {
-    fontSize: 14,
-    color: "#1f2937",
-    lineHeight: 20,
-  },
-  mapCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  map: {
-    height: 200,
-    borderRadius: 8,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  editButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#10b981",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  editButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  deleteButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ef4444",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  sectionsContainer: {
-    gap: 16,
-  },
   sectionCard: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
+    margin: 16,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -615,67 +1089,106 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1f2937",
+    marginBottom: 12,
   },
   addButton: {
+    backgroundColor: "#eead2d",
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#eead2d",
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    gap: 4,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
   },
   addButtonText: {
     color: "#fff",
-    fontWeight: "500",
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "600",
   },
-  tableContainer: {
-    gap: 12,
-  },
-  tableRow: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 8,
+  itemCard: {
     padding: 12,
-    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
   },
-  tableCell: {
-    gap: 4,
-  },
-  cellLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#6b7280",
-  },
-  cellValue: {
-    fontSize: 14,
-    color: "#1f2937",
-  },
-  rowActionButtons: {
+  itemHeader: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 8,
-  },
-  actionButton: {
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: "#f3f4f6",
-  },
-  emptyContainer: {
-    padding: 20,
+    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 4,
+  },
+  itemDate: {
+    fontSize: 14,
+    color: "#666",
+  },
+  itemType: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  itemDescription: {
+    fontSize: 16,
+    color: "#333",
+  },
+  itemObservations: {
+    fontSize: 14,
+    color: "#666",
   },
   emptyText: {
-    color: "#6b7280",
-    fontSize: 14,
+    fontSize: 16,
+    color: "#666",
     textAlign: "center",
+    fontStyle: "italic",
+    paddingVertical: 20,
+  },
+  measurementGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 4,
+  },
+  measurementItem: {
+    fontSize: 14,
+    color: "#666",
+    flex: 1,
+    minWidth: "45%",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  paginationButton: {
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 4,
+  },
+  paginationButtonDisabled: {
+    backgroundColor: "#f3f4f6",
+  },
+  paginationText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  paginationTextDisabled: {
+    color: "#999",
+  },
+  paginationInfo: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: "#666",
+  },
+  itemActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 8,
+  },
+  actionButton: {
+    padding: 4,
   },
 });
 
-export default BeehiveDetails;
+export default BeehiveDetails; 
