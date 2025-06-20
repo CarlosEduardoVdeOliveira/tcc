@@ -59,6 +59,29 @@ const deleteDisease = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const syncDiseases = async (req, res) => {
+  try {
+    const diseases = req.body;
+
+    if (!Array.isArray(diseases)) {
+      return res.status(400).json({ error: "Formato inválido. Esperado um array de doenças." });
+    }
+
+    const result = await prisma.$transaction(
+      diseases.map((disease) =>
+        prisma.disease.upsert({
+          where: { id: disease.id || 0 },
+          update: disease,
+          create: disease,
+        })
+      )
+    );
+
+    res.status(201).json({ message: "Doenças sincronizadas com sucesso", result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 export default {
   getAllDiseases,
@@ -66,4 +89,5 @@ export default {
   getDiseaseByBeehiveId,
   updateDisease,
   deleteDisease,
+  syncDiseases
 };

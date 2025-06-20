@@ -75,6 +75,29 @@ const deleteProductionHoney = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const syncProductionsHoney = async (req, res) => {
+  try {
+    const productions = req.body;
+
+    if (!Array.isArray(productions)) {
+      return res.status(400).json({ error: "Formato inválido. Esperado um array de produções de mel." });
+    }
+
+    const result = await prisma.$transaction(
+      productions.map((production) =>
+        prisma.productionHoney.upsert({
+          where: { id: production.id || 0 },
+          update: production,
+          create: production,
+        })
+      )
+    );
+
+    res.status(201).json({ message: "Produções de mel sincronizadas com sucesso", result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 export default {
   getAllProductionsHoney,
@@ -83,4 +106,5 @@ export default {
   createProductionHoney,
   updateProductionHoney,
   deleteProductionHoney,
+  syncProductionsHoney
 };

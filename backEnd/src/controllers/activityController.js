@@ -89,6 +89,29 @@ const deleteActivity = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const syncActivities = async (req, res) => {
+  try {
+    const activities = req.body; // Espera um array de objetos
+    if (!Array.isArray(activities)) {
+      return res.status(400).json({ error: "Formato inválido: esperado array de atividades" });
+    }
+
+    const created = await prisma.$transaction(
+      activities.map((activity) =>
+        prisma.activity.upsert({
+          where: { id: activity.id || 0 }, // se não tiver id, força insert
+          update: activity,
+          create: activity,
+        })
+      )
+    );
+
+    res.status(201).json({ message: "Atividades sincronizadas com sucesso", created });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export default {
   getAllActivities,
   getActivityById,
@@ -96,4 +119,5 @@ export default {
   createActivity,
   updateActivity,
   deleteActivity,
+  syncActivities
 };

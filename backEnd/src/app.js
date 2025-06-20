@@ -15,6 +15,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Rota de health check
+app.get("/api/v1/health", (req, res) => {
+  res.status(200).json({ 
+    status: "OK", 
+    message: "Backend funcionando corretamente",
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use("/api/v1/login", loginRoutes);
 app.use("/api/v1/producer", producerRoutes);
 app.use("/api/v1/beehive", authenticate, beehiveRoutes);

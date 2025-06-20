@@ -1,9 +1,13 @@
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from "react-native";
 
-function Button({ children, style, ...props }) {
+function Button({ children, style, loading, ...props }) {
   return (
-    <TouchableOpacity style={[styles.button, style]} {...props}>
-      <Text style={styles.text}>{children}</Text>
+    <TouchableOpacity style={[styles.button, style]} {...props} disabled={loading || props.disabled}>
+      {loading ? (
+        <ActivityIndicator color="#fff" />
+      ) : (
+        <Text style={styles.text}>{children}</Text>
+      )}
     </TouchableOpacity>
   );
 }
