@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import {
-    Alert,
-    Modal,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { clearAllOfflineData, initializeOfflineData } from "../api/offlineApi.js";

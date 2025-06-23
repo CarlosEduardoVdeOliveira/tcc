@@ -91,7 +91,7 @@ function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
     handleLocationSelect(coords);
   };
 
-  if (!isLocationLoaded) {
+  if (!isLocationLoaded || !markerPosition) {
     return (
       <View style={[styles.loadingContainer, style]}>
         <Text style={styles.loadingText}>Carregando mapa...</Text>

@@ -1,15 +1,15 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-    createFood,
-    deleteFood,
-    getFood,
-    updateFood
+  createFood,
+  deleteFood,
+  getFood,
+  updateFood
 } from "./foodApi.js";
 import {
-    offlineCreateFood,
-    offlineDeleteFood,
-    offlineGetFood,
-    offlineUpdateFood
+  offlineCreateFood,
+  offlineDeleteFood,
+  offlineGetFood,
+  offlineUpdateFood
 } from "./offlineApi.js";
 
 // API híbrida para alimentação

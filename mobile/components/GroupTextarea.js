@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, TextInput, View, StyleSheet } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 function GroupTextarea({ label, icon = null, ...props }) {
   return (

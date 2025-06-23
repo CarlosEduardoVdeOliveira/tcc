@@ -1,6 +1,6 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import Icon from "react-native-vector-icons/Ionicons";
 
 function DateInput({ label, value, onChangeText, placeholder = "Selecione uma data" }) {

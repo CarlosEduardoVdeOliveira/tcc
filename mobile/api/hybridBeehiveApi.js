@@ -1,17 +1,17 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-    createBeehive,
-    deleteBeehive,
-    getBeehive,
-    getBeehives,
-    updateBeehive
+  createBeehive,
+  deleteBeehive,
+  getBeehive,
+  getBeehives,
+  updateBeehive
 } from "./beehiveApi.js";
 import {
-    offlineCreateBeehive,
-    offlineDeleteBeehive,
-    offlineGetBeehive,
-    offlineGetBeehives,
-    offlineUpdateBeehive
+  offlineCreateBeehive,
+  offlineDeleteBeehive,
+  offlineGetBeehive,
+  offlineGetBeehives,
+  offlineUpdateBeehive
 } from "./offlineApi.js";
 
 // API híbrida para colmeias

@@ -1,16 +1,16 @@
+import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from "lucide-react-native";
 import { useContext, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
-import { useRouter } from 'expo-router';
 import Button from "../components/Button.js";
 import { AuthContext } from "../contexts/auth.js";
 
@@ -92,12 +92,13 @@ export default function Login() {
             </View>
 
             <Button
-              title={loading ? "Entrando..." : "Entrar"}
               onPress={handleLogin}
               style={styles.button}
               textStyle={styles.buttonText}
               disabled={loading}
-            />
+            >
+              <Text>{loading ? "Entrando..." : "Entrar"}</Text>
+            </Button>
 
             <TouchableOpacity
               style={{ marginTop: 18 }}

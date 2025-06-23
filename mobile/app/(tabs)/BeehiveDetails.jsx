@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -341,6 +341,10 @@ function BeehiveDetails() {
     }
   };
 
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -367,17 +371,12 @@ function BeehiveDetails() {
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" />
+      <Header pathName="/" title="Detalhes da Colmeia" />
       
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header da página */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Detalhes da Colmeia</Text>
-        </View>
-
         {/* Informações da colmeia */}
         <View style={styles.beehiveCard}>
           <View style={styles.beehiveInfo}>
@@ -935,17 +934,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-  },
-  header: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
   },
   beehiveCard: {
     backgroundColor: "#fff",

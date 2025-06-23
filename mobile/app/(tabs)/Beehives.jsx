@@ -1,12 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { getBeehives } from "../../api/beehiveApi.js";
@@ -23,6 +23,10 @@ function Beehives() {
   const [userToken, setUserToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   useEffect(() => {
     async function loadUserData() {
@@ -76,7 +80,7 @@ function Beehives() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
+        <Header title="Minha(s) colmeia(s)" subtitle="Gerencie suas colmeias de forma eficiente" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando colmeias...</Text>
         </View>
@@ -86,16 +90,8 @@ function Beehives() {
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" />
+      <Header title="Minha(s) colmeia(s)" subtitle="Gerencie suas colmeias de forma eficiente" />
       
-      {/* Header da página */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Minha(s) colmeia(s)</Text>
-        <Text style={styles.subtitle}>
-          Gerencie suas colmeias de forma eficiente
-        </Text>
-      </View>
-
       {/* Conteúdo principal */}
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
@@ -136,24 +132,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-  },
-  header: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
   },
   scrollContainer: {
     flexGrow: 1,

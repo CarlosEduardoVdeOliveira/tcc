@@ -1,15 +1,15 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-    offlineCreateProductionHoney,
-    offlineDeleteProductionHoney,
-    offlineGetProductionHoney,
-    offlineUpdateProductionHoney
+  offlineCreateProductionHoney,
+  offlineDeleteProductionHoney,
+  offlineGetProductionHoney,
+  offlineUpdateProductionHoney
 } from "./offlineApi.js";
 import {
-    createProductionHoney,
-    deleteProductionHoney,
-    getProductionHoney,
-    updateProductionHoney
+  createProductionHoney,
+  deleteProductionHoney,
+  getProductionHoney,
+  updateProductionHoney
 } from "./productionHoneyApi.js";
 
 // API híbrida para produção de mel

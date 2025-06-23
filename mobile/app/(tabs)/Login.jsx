@@ -2,16 +2,17 @@ import { useNavigation } from "@react-navigation/native";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useContext, useState } from "react";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import Button from "../../components/Button.js";
+import Footer from "../../components/Footer.js";
 import { AuthContext } from "../../contexts/auth.js";
 
 function Login() {
@@ -32,65 +33,68 @@ function Login() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <View style={styles.container}>
-        <Text style={styles.title}>Boas-vindas!</Text>
-        <Text style={styles.subtitle}>
-          A sua plataforma de gerenciamento das suas colmeias.
-        </Text>
-        <View style={styles.formBox}>
-          <Text style={styles.formTitle}>Já tem conta? Faça seu login:</Text>
+    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, width: '100%' }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', width: '100%' }}>
+          <Text style={styles.title}>Boas-vindas!</Text>
+          <Text style={styles.subtitle}>
+            A sua plataforma de gerenciamento das suas colmeias.
+          </Text>
+          <View style={styles.formBox}>
+            <Text style={styles.formTitle}>Já tem conta? Faça seu login:</Text>
 
-          <Text style={styles.label}>E-mail</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu e-mail"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            placeholderTextColor="#bdbdbd"
-          />
-
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.passwordContainer}>
+            <Text style={styles.label}>E-mail</Text>
             <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Digite sua senha"
-              secureTextEntry={viewPassword}
-              value={password}
-              onChangeText={setPassword}
+              style={styles.input}
+              placeholder="Digite seu e-mail"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
               placeholderTextColor="#bdbdbd"
             />
-            <TouchableOpacity onPress={() => setViewPassword((prev) => !prev)}>
-              {viewPassword ? (
-                <EyeOff size={22} color="#bdbdbd" />
-              ) : (
-                <Eye size={22} color="#bdbdbd" />
-              )}
+
+            <Text style={styles.label}>Senha</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Digite sua senha"
+                secureTextEntry={viewPassword}
+                value={password}
+                onChangeText={setPassword}
+                placeholderTextColor="#bdbdbd"
+              />
+              <TouchableOpacity onPress={() => setViewPassword((prev) => !prev)}>
+                {viewPassword ? (
+                  <EyeOff size={22} color="#bdbdbd" />
+                ) : (
+                  <Eye size={22} color="#bdbdbd" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <Button
+              onPress={handleLogin}
+              style={styles.button}
+              textStyle={styles.buttonText}
+            >
+              <Text>Entrar</Text>
+            </Button>
+
+            <TouchableOpacity
+              style={{ marginTop: 18 }}
+              onPress={() => navigation.navigate("CreateAccount")}
+            >
+              <Text style={styles.link}>Ainda não tem conta? Cadastre-se</Text>
             </TouchableOpacity>
           </View>
-
-          <Button
-            onPress={handleLogin}
-            style={styles.button}
-            textStyle={styles.buttonText}
-          >
-            <Text>Entrar</Text>
-          </Button>
-
-          <TouchableOpacity
-            style={{ marginTop: 18 }}
-            onPress={() => navigation.navigate("CreateAccount")}
-          >
-            <Text style={styles.link}>Ainda não tem conta? Cadastre-se</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+      <Footer />
+    </View>
   );
 }
 
@@ -98,8 +102,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
-    justifyContent: "center",
-    alignItems: "center",
     padding: 24,
   },
   title: {
@@ -126,6 +128,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+    alignSelf: 'center',
   },
   formTitle: {
     fontSize: 18,

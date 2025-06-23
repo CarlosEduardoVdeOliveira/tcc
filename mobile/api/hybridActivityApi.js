@@ -1,15 +1,15 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-    createActivity,
-    deleteActivity,
-    getActivity,
-    updateActivity
+  createActivity,
+  deleteActivity,
+  getActivity,
+  updateActivity
 } from "./activityApi.js";
 import {
-    offlineCreateActivity,
-    offlineDeleteActivity,
-    offlineGetActivity,
-    offlineUpdateActivity
+  offlineCreateActivity,
+  offlineDeleteActivity,
+  offlineGetActivity,
+  offlineUpdateActivity
 } from "./offlineApi.js";
 
 // API híbrida para atividades

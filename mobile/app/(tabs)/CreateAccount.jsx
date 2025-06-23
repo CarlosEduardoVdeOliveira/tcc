@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
     Alert,
     Platform,
@@ -13,11 +14,12 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
 import { createUser } from "../../api/userApi.js";
 import Button from "../../components/Button.js";
+import Footer from "../../components/Footer.js";
+import Map from "../../components/Map.js";
 import { getApiUrl } from "../../utils/config.js";
 
 const isValidCpfCnpj = (value) => {
@@ -37,21 +39,20 @@ const schema = z.object({
 });
 
 function CreateAccount() {
-  const [viewPassword, setViewPassword] = useState(false);
-  const [coords, setCoords] = useState({
-    latitude: -15.7801,
-    longitude: -47.9292,
-  });
+  const [viewPassword, setViewPassword] = useState(true);
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [loadingTest, setLoadingTest] = useState(false);
   const navigation = useNavigation();
 
   const {
     handleSubmit,
     setValue,
     formState: { errors },
+    control,
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -60,16 +61,33 @@ function CreateAccount() {
       password: "",
       startDate: "",
       status: "",
-      latitude: -15.7801,
-      longitude: -47.9292,
+      latitude: null,
+      longitude: null,
       cpfCnpj: "",
     },
   });
 
+  // Buscar localização atual ao montar a tela
+  useEffect(() => {
+    const getLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+          setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+          setValue("latitude", location.coords.latitude);
+          setValue("longitude", location.coords.longitude);
+        }
+      } catch (error) {
+        console.error("Erro ao obter localização:", error);
+      }
+    };
+    getLocation();
+  }, [setValue]);
+
   const testSubmitWithoutValidation = async () => {
     try {
-      console.log("=== TESTE SEM VALIDAÇÃO ===");
-      
+      setLoadingTest(true);
       // Gerar email único baseado no timestamp
       const timestamp = Date.now();
       const testData = {
@@ -78,23 +96,20 @@ function CreateAccount() {
         password: "123456",
         startDate: "2024-01-01",
         status: "Ativo",
-        latitude: -15.7801,
-        longitude: -47.9292,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         cpfCnpj: "12345678901"
       };
-      
-      console.log("Enviando dados de teste:", testData);
       const response = await createUser(testData);
-      console.log("Resposta:", response);
-      
       if (response.error) {
         Alert.alert("Erro", response.message);
       } else {
         Alert.alert("Sucesso", "Teste funcionou!");
       }
     } catch (error) {
-      console.error("Erro no teste:", error);
       Alert.alert("Erro", error.message);
+    } finally {
+      setLoadingTest(false);
     }
   };
 
@@ -147,14 +162,6 @@ function CreateAccount() {
     }
   };
 
-  const handleMapPress = (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    console.log("Coordenadas selecionadas:", { latitude, longitude });
-    setCoords({ latitude, longitude });
-    setValue("latitude", latitude);
-    setValue("longitude", longitude);
-  };
-
   const handleStatusSelect = (status) => {
     console.log("Status selecionado:", status);
     setSelectedStatus(status);
@@ -176,253 +183,263 @@ function CreateAccount() {
     return date.toLocaleDateString("pt-BR");
   };
 
-  const togglePasswordVisibility = () => {
-    console.log("Alterando visibilidade da senha:", !viewPassword);
-    setViewPassword(!viewPassword);
-  };
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          <Text style={styles.bold}>Ainda não tem cadastro?</Text>
-          {"\n"}
-          Comece hoje a gerenciar suas colmeias, precisamos de alguns dados:
-        </Text>
-      </View>
-
-      <View style={styles.form}>
-        {/* Nome */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu nome"
-            onChangeText={(text) => setValue("name", text)}
-          />
-          {errors.name && (
-            <Text style={styles.error}>{errors.name.message}</Text>
-          )}
-        </View>
-
-        {/* Email */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>E-mail</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            onChangeText={(text) => setValue("email", text)}
-          />
-          {errors.email && (
-            <Text style={styles.error}>{errors.email.message}</Text>
-          )}
-        </View>
-
-        {/* CPF/CNPJ */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>CPF/CNPJ</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu CPF ou CNPJ"
-            onChangeText={(text) => setValue("cpfCnpj", text)}
-          />
-          {errors.cpfCnpj && (
-            <Text style={styles.error}>{errors.cpfCnpj.message}</Text>
-          )}
-        </View>
-
-        {/* Senha */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Senha</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Digite uma senha"
-              secureTextEntry={!viewPassword}
-              onChangeText={(text) => setValue("password", text)}
+    <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
+        <View style={[styles.form, { alignSelf: 'center', width: '100%', maxWidth: 400 }]}>
+          {/* Nome */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome</Text>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite seu nome"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
             />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={togglePasswordVisibility}
-            >
-              <Icon
-                name={viewPassword ? "eye" : "eye-off"}
-                size={24}
-                color="#666"
-              />
-            </TouchableOpacity>
+            {errors.name && (
+              <Text style={styles.error}>{errors.name.message}</Text>
+            )}
           </View>
-          {errors.password && (
-            <Text style={styles.error}>{errors.password.message}</Text>
-          )}
-        </View>
 
-        {/* Status e Data */}
-        <View style={styles.rowContainer}>
-          {/* Status */}
-          <View style={styles.halfWidth}>
-            <Text style={styles.label}>Status</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => {
-                console.log("Abrindo modal de status");
-                setShowStatusPicker(true);
-              }}
-            >
-              <Text
-                style={
-                  selectedStatus ? styles.selectText : styles.placeholderText
-                }
+          {/* Email */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>E-mail</Text>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite seu email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {errors.email && (
+              <Text style={styles.error}>{errors.email.message}</Text>
+            )}
+          </View>
+
+          {/* CPF/CNPJ */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>CPF/CNPJ</Text>
+            <Controller
+              control={control}
+              name="cpfCnpj"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite seu CPF ou CNPJ"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {errors.cpfCnpj && (
+              <Text style={styles.error}>{errors.cpfCnpj.message}</Text>
+            )}
+          </View>
+
+          {/* Senha */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Senha</Text>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Digite uma senha"
+                    secureTextEntry={viewPassword}
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setViewPassword((prev) => !prev)}
+                  >
+                    <Icon
+                      name={viewPassword ? "eye-off" : "eye"}
+                      size={24}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.password && (
+              <Text style={styles.error}>{errors.password.message}</Text>
+            )}
+          </View>
+
+          {/* Status e Data */}
+          <View style={styles.rowContainer}>
+            {/* Status */}
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Status</Text>
+              <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => {
+                  console.log("Abrindo modal de status");
+                  setShowStatusPicker(true);
+                }}
               >
-                {selectedStatus || "Selecione o status"}
-              </Text>
-              <Icon name="chevron-down" size={20} color="#666" />
-            </TouchableOpacity>
-            {errors.status && (
-              <Text style={styles.error}>{errors.status.message}</Text>
-            )}
+                <Text
+                  style={
+                    selectedStatus ? styles.selectText : styles.placeholderText
+                  }
+                >
+                  {selectedStatus || "Selecione o status"}
+                </Text>
+                <Icon name="chevron-down" size={20} color="#666" />
+              </TouchableOpacity>
+              {errors.status && (
+                <Text style={styles.error}>{errors.status.message}</Text>
+              )}
+            </View>
+
+            {/* Data */}
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Data de início</Text>
+              <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => {
+                  console.log("Abrindo date picker");
+                  setShowDatePicker(true);
+                }}
+              >
+                <Text style={styles.selectText}>{formatDate(selectedDate)}</Text>
+                <Icon name="calendar" size={20} color="#666" />
+              </TouchableOpacity>
+              {errors.startDate && (
+                <Text style={styles.error}>{errors.startDate.message}</Text>
+              )}
+            </View>
           </View>
 
-          {/* Data */}
-          <View style={styles.halfWidth}>
-            <Text style={styles.label}>Data de início</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => {
-                console.log("Abrindo date picker");
-                setShowDatePicker(true);
+          {/* Mapa */}
+          <View style={styles.mapContainer}>
+            <Text style={styles.label}>Localização</Text>
+            <Map
+              latitude={coords.latitude}
+              longitude={coords.longitude}
+              onSelectLocation={([latitude, longitude]) => {
+                setCoords({ latitude, longitude });
+                setValue("latitude", latitude);
+                setValue("longitude", longitude);
               }}
-            >
-              <Text style={styles.selectText}>{formatDate(selectedDate)}</Text>
-              <Icon name="calendar" size={20} color="#666" />
-            </TouchableOpacity>
-            {errors.startDate && (
-              <Text style={styles.error}>{errors.startDate.message}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Mapa */}
-        <View style={styles.mapContainer}>
-          <Text style={styles.label}>Localização</Text>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: coords.latitude,
-              longitude: coords.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-            onPress={handleMapPress}
-          >
-            <Marker coordinate={coords} />
-          </MapView>
-          {errors.latitude && (
-            <Text style={styles.error}>{errors.latitude.message}</Text>
-          )}
-          {errors.longitude && (
-            <Text style={styles.error}>{errors.longitude.message}</Text>
-          )}
-        </View>
-
-        {/* Botão de Teste */}
-        <TouchableOpacity 
-          style={styles.testButton}
-          onPress={testSubmitWithoutValidation}
-        >
-          <Text style={styles.testButtonText}>Teste Sem Validação</Text>
-        </TouchableOpacity>
-
-        {/* Botão Cadastrar */}
-        <Button 
-          onPress={() => {
-            console.log("=== BOTÃO CADASTRAR PRESSIONADO ===");
-            console.log("Chamando handleSubmit...");
-            handleSubmit(onSubmit)();
-          }}
-        >
-          <Text>Cadastrar</Text>
-        </Button>
-
-        {/* Link para Login */}
-        <TouchableOpacity
-          style={styles.loginLinkContainer}
-          onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.loginLink}>
-            Já tenho conta,{" "}
-            <Text style={styles.loginLinkBold}>fazer login?</Text>
-          </Text>
-        </TouchableOpacity>
-
-        {/* Componente de Teste */}
-        <TestCadastro />
-      </View>
-
-      {/* Modal Status Picker */}
-      {showStatusPicker && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecione o Status</Text>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-                console.log("Status Ativo selecionado");
-                handleStatusSelect("Ativo");
-              }}
-            >
-              <Text style={styles.modalOptionText}>Ativo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-                console.log("Status Inativo selecionado");
-                handleStatusSelect("Inativo");
-              }}
-            >
-              <Text style={styles.modalOptionText}>Inativo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalCancel}
-              onPress={() => {
-                console.log("Modal de status fechado");
-                setShowStatusPicker(false);
-              }}
-            >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* DateTimePicker */}
-      {showDatePicker && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecione a Data</Text>
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-              style={styles.datePicker}
+              style={styles.map}
             />
-            <TouchableOpacity
-              style={styles.modalCancel}
-              onPress={() => {
-                console.log("Date picker fechado");
-                setShowDatePicker(false);
-              }}
-            >
-              <Text style={styles.modalCancelText}>Fechar</Text>
-            </TouchableOpacity>
+            {errors.latitude && (
+              <Text style={styles.error}>{errors.latitude.message}</Text>
+            )}
+            {errors.longitude && (
+              <Text style={styles.error}>{errors.longitude.message}</Text>
+            )}
           </View>
+
+          {/* Botão de Teste */}
+          <Button 
+            style={styles.testButton}
+            onPress={testSubmitWithoutValidation}
+            loading={loadingTest}
+          >
+            Teste Sem Validação
+          </Button>
+
+          {/* Botão Cadastrar */}
+          <Button 
+            onPress={handleSubmit(onSubmit)}
+          >
+            Cadastrar
+          </Button>
+
+          {/* Link para Login */}
+          <TouchableOpacity
+            style={styles.loginLinkContainer}
+            onPress={() => navigation.navigate("Login")}
+          >
+            <Text style={styles.loginLink}>
+              Já tenho conta,{' '}
+              <Text style={styles.loginLinkBold}>fazer login?</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
-      )}
-    </ScrollView>
+
+        {/* Modal Status Picker */}
+        {showStatusPicker && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Selecione o Status</Text>
+              <TouchableOpacity
+                style={styles.modalOption}
+                onPress={() => {
+                  console.log("Status Ativo selecionado");
+                  handleStatusSelect("Ativo");
+                }}
+              >
+                <Text style={styles.modalOptionText}>Ativo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalOption}
+                onPress={() => {
+                  console.log("Status Inativo selecionado");
+                  handleStatusSelect("Inativo");
+                }}
+              >
+                <Text style={styles.modalOptionText}>Inativo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => {
+                  console.log("Modal de status fechado");
+                  setShowStatusPicker(false);
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* DateTimePicker */}
+        {showDatePicker && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Selecione a Data</Text>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+                style={styles.datePicker}
+              />
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => {
+                  console.log("Date picker fechado");
+                  setShowDatePicker(false);
+                }}
+              >
+                <Text style={styles.modalCancelText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+      <Footer />
+    </View>
   );
 }
 
@@ -434,9 +451,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
   title: {
     fontSize: 18,
@@ -450,6 +464,7 @@ const styles = StyleSheet.create({
   form: {
     padding: 20,
     gap: 16,
+    backgroundColor: "transparent",
   },
   inputGroup: {
     gap: 8,
@@ -466,7 +481,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#fafafa",
   },
   passwordContainer: {
     flexDirection: "row",
@@ -474,7 +489,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: "#fafafa",
   },
   passwordInput: {
     flex: 1,

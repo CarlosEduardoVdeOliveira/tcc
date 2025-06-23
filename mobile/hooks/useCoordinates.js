@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Função para validar coordenadas
 export const isValidCoordinates = (lat, lng) => {

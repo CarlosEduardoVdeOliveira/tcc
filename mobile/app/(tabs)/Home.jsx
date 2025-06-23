@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { useLayoutEffect } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import ImgHero from "../../assets/images/imgHero.png"; // Certifique-se de que a imagem existe
 import Button from "../../components/Button.js";
@@ -7,6 +8,10 @@ import Footer from "../../components/Footer.js";
 
 function Home() {
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   return (
     <Container>
@@ -20,7 +25,7 @@ function Home() {
 
         <View style={styles.buttons}>
           <Button 
-            onPress={() => navigation.navigate("Login")}
+            onPress={() => navigation.reset({ index: 0, routes: [{ name: "Login" }] })}
             style={styles.primaryButton}
           >
             <Text style={styles.primaryButtonText}>Já tenho conta</Text>
@@ -35,9 +40,8 @@ function Home() {
         </View>
 
         <Image source={ImgHero} style={styles.image} resizeMode="contain" />
-
-        <Footer />
       </View>
+      <Footer />
     </Container>
   );
 }

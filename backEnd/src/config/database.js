@@ -73,14 +73,14 @@ class Database {
         await this.prisma.$queryRaw`SELECT 1`;
         
         this.connectionAttempts = 0; // Reset contador de tentativas
-        logger.info('✅ Conexão com o banco de dados estabelecida com sucesso');
+        logger.info('Conexão com o banco de dados estabelecida com sucesso');
         break;
 
       } catch (error) {
-        logger.error(`❌ Erro na tentativa ${this.connectionAttempts}:`, error);
+        logger.error(`Erro na tentativa ${this.connectionAttempts}:`, error);
         
         if (this.connectionAttempts >= this.maxRetries) {
-          logger.error('❌ Número máximo de tentativas de conexão atingido');
+          logger.error('Número máximo de tentativas de conexão atingido');
           this.isConnecting = false;
           throw new Error(`Falha ao conectar com o banco de dados após ${this.maxRetries} tentativas: ${error.message}`);
         }
@@ -100,7 +100,7 @@ class Database {
         this.prisma = null;
         logger.info('🔌 Conexão com o banco de dados encerrada com sucesso');
       } catch (error) {
-        logger.error('❌ Erro ao desconectar do banco de dados:', error);
+        logger.error('Erro ao desconectar do banco de dados:', error);
         throw error;
       }
     }

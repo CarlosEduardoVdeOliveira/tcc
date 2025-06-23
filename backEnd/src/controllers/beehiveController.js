@@ -1,7 +1,7 @@
 /* eslint-disable object-shorthand */
-import { z } from "zod";
-import { PrismaClient } from "../generated/prisma/client.js";
-import beehiveSchema from "../schemas/BeehiveSchema.js";
+import { z } from 'zod';
+import { PrismaClient } from '../generated/prisma/client.js';
+import beehiveSchema from '../schemas/BeehiveSchema.js';
 
 const prisma = new PrismaClient();
 
@@ -9,15 +9,15 @@ const getAllBeehives = async (req, res) => {
   try {
     // O middleware de autenticação adiciona req.user com os dados do token
     const producerId = req.user.id;
-    
+
     const beehives = await prisma.beehive.findMany({
       where: {
-        producerId: producerId
-      }
+        producerId: producerId,
+      },
     });
-    
+
     if (beehives.length === 0) {
-      return res.status(404).json({ error: "Nenhuma colmeia encontrada." });
+      return res.status(404).json({ error: 'Nenhuma colmeia encontrada.' });
     }
     res.json(beehives);
   } catch (error) {
@@ -29,11 +29,11 @@ const getBeehiveById = async (req, res) => {
   try {
     const { id } = req.params;
     const producerId = req.user.id;
-    
+
     const beehive = await prisma.beehive.findFirst({
-      where: { 
+      where: {
         id: Number(id),
-        producerId: producerId
+        producerId: producerId,
       },
       include: {
         activities: true,
@@ -45,7 +45,7 @@ const getBeehiveById = async (req, res) => {
     });
 
     if (!beehive) {
-      return res.status(404).json({ error: "Colmeia não encontrada" });
+      return res.status(404).json({ error: 'Colmeia não encontrada' });
     }
 
     res.json(beehive);
@@ -62,7 +62,7 @@ const createBeehive = async (req, res) => {
     const beehive = await prisma.beehive.create({
       data: {
         ...data,
-        producerId: producerId
+        producerId: producerId,
       },
     });
 
@@ -70,15 +70,37 @@ const createBeehive = async (req, res) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
-        status: "error",
-        message: "Dados inválidos",
+        status: 'error',
+        message: 'Dados inválidos',
         errors: error.errors,
       });
     }
-    res.status(500).json({ status: "error", message: error.message });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
+const findAllBeehivePerStatus = async (req, res) => {
+  try {
+    const { status } = beehiveSchema.pick({ status: true }).parse(req.body);
 
+    const beehives = await prisma.beehive.findMany({
+      where: {
+        status,
+      },
+    });
+
+    if (beehives.length === 0) {
+      return res.status(404).json({ error: 'Nenhuma colmeia encontrada com o status informado.' });
+    }
+
+    return res.status(200).json(beehives);
+  } catch (error) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Erro ao filtrar colmeias por status.',
+      errors: error?.errors || error.message,
+    });
+  }
+};
 const updateBeehive = async (req, res) => {
   try {
     const { id } = req.params;
@@ -87,14 +109,14 @@ const updateBeehive = async (req, res) => {
 
     // Verificar se a colmeia pertence ao usuário
     const existingBeehive = await prisma.beehive.findFirst({
-      where: { 
+      where: {
         id: Number(id),
-        producerId: producerId
-      }
+        producerId: producerId,
+      },
     });
 
     if (!existingBeehive) {
-      return res.status(404).json({ error: "Colmeia não encontrada" });
+      return res.status(404).json({ error: 'Colmeia não encontrada' });
     }
 
     const beehive = await prisma.beehive.update({
@@ -106,8 +128,8 @@ const updateBeehive = async (req, res) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
-        status: "error",
-        message: "Dados inválidos",
+        status: 'error',
+        message: 'Dados inválidos',
         errors: error.errors,
       });
     }
@@ -123,14 +145,14 @@ const deleteBeehive = async (req, res) => {
 
     // Verificar se a colmeia pertence ao usuário
     const existingBeehive = await prisma.beehive.findFirst({
-      where: { 
+      where: {
         id: Number(id),
-        producerId: producerId
-      }
+        producerId: producerId,
+      },
     });
 
     if (!existingBeehive) {
-      return res.status(404).json({ error: "Colmeia não encontrada" });
+      return res.status(404).json({ error: 'Colmeia não encontrada' });
     }
 
     await prisma.beehive.delete({
@@ -147,11 +169,13 @@ const syncBeehives = async (req, res) => {
     const producerId = req.user.id;
 
     if (!Array.isArray(beehives)) {
-      return res.status(400).json({ error: "Formato inválido. Esperado um array de colmeias." });
+      return res
+        .status(400)
+        .json({ error: 'Formato inválido. Esperado um array de colmeias.' });
     }
 
     const result = await prisma.$transaction(
-      beehives.map((beehive) =>
+      beehives.map(beehive =>
         prisma.beehive.upsert({
           where: { id: beehive.id || 0 },
           update: { ...beehive, producerId },
@@ -160,7 +184,9 @@ const syncBeehives = async (req, res) => {
       )
     );
 
-    res.status(201).json({ message: "Colmeias sincronizadas com sucesso", result });
+    res
+      .status(201)
+      .json({ message: 'Colmeias sincronizadas com sucesso', result });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -170,7 +196,8 @@ export default {
   getAllBeehives,
   getBeehiveById,
   createBeehive,
+  findAllBeehivePerStatus,
   updateBeehive,
   deleteBeehive,
-  syncBeehives
+  syncBeehives,
 };

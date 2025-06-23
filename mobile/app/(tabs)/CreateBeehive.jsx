@@ -2,17 +2,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import * as Location from "expo-location";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
@@ -37,7 +38,7 @@ const schema = z.object({
 function CreateBeehive() {
   const navigation = useNavigation();
   const [producerId, setProducerId] = useState(null);
-  const [coords, setCoords] = useState({ latitude: -23.55052, longitude: -46.633308 }); // São Paulo
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -56,8 +57,8 @@ function CreateBeehive() {
       observations: "",
       startDate: "",
       status: "",
-      latitude: -23.55052,
-      longitude: -46.633308,
+      latitude: null,
+      longitude: null,
     },
   });
 
@@ -79,14 +80,27 @@ function CreateBeehive() {
             setCoords({ latitude: userLat, longitude: userLng });
             setValue("latitude", userLat);
             setValue("longitude", userLng);
+            return;
           }
         }
+        // Se não tem coordenadas do usuário, buscar localização atual
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+          setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+          setValue("latitude", location.coords.latitude);
+          setValue("longitude", location.coords.longitude);
+        }
       } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
+        console.error("Erro ao carregar usuário ou localização:", error);
       }
     };
     loadUser();
   }, [setValue]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   const onSubmit = async (data) => {
     if (!producerId) {
@@ -157,20 +171,12 @@ function CreateBeehive() {
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" />
+      <Header pathName="/" title="Cadastro de Colmeia" subtitle="Adicione uma nova colmeia ao seu sistema de gerenciamento" />
       
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header da página */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Cadastro de Colmeia</Text>
-          <Text style={styles.subtitle}>
-            Adicione uma nova colmeia ao seu sistema de gerenciamento
-          </Text>
-        </View>
-
         {/* Formulário */}
         <View style={styles.form}>
           {/* Nome */}
@@ -254,19 +260,19 @@ function CreateBeehive() {
               Toque no mapa para definir a localização da colmeia
             </Text>
             <Map
+              latitude={watchedValues.latitude}
+              longitude={watchedValues.longitude}
               onSelectLocation={handleLocationSelect}
-              latitude={coords.latitude}
-              longitude={coords.longitude}
               style={styles.map}
             />
             
             {/* Informações das coordenadas */}
             <View style={styles.coordinatesInfo}>
               <Text style={styles.coordinatesText}>
-                Latitude: {coords.latitude.toFixed(6)}
+                Latitude: {coords.latitude !== null ? coords.latitude.toFixed(6) : 'Carregando...'}
               </Text>
               <Text style={styles.coordinatesText}>
-                Longitude: {coords.longitude.toFixed(6)}
+                Longitude: {coords.longitude !== null ? coords.longitude.toFixed(6) : 'Carregando...'}
               </Text>
             </View>
             
@@ -343,27 +349,6 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 16,
-  },
-  header: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
   },
   form: {
     backgroundColor: "#fff",

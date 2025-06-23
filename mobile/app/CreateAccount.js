@@ -1,17 +1,17 @@
+import axios from "axios";
 import { useRouter } from "expo-router";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import axios from "axios";
 import Button from "../components/Button.js";
 import Footer from "../components/Footer.js";
 import { getApiUrl } from "../utils/config.js";
@@ -161,11 +161,11 @@ export default function CreateAccount() {
             </View>
 
             <Button
-              title={loading ? "Criando conta..." : "Criar Conta"}
+              
               onPress={handleCreateAccount}
               style={styles.button}
               disabled={loading}
-            />
+            ><Text>{loading ? "Criando conta..." : "Criar Conta"}</Text></Button>
 
             <TouchableOpacity
               style={{ marginTop: 18 }}

@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../contexts/auth.js';
 
 export default function RootLayout() {

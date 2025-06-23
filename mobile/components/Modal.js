@@ -1,9 +1,9 @@
 import {
-    Modal as RNModal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Modal as RNModal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 

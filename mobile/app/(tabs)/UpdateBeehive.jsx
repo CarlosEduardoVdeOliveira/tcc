@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
     Alert,
@@ -18,6 +18,8 @@ import {
 import { z } from "zod";
 import { getBeehive, updateBeehive } from "../../api/beehiveApi.js";
 import Button from "../../components/Button.js";
+import Footer from "../../components/Footer.js";
+import Header from "../../components/Header.js";
 import Map from "../../components/Map.js";
 
 // Esquema Zod
@@ -69,6 +71,10 @@ function UpdateBeehive() {
   });
 
   const watchedValues = watch();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   useEffect(() => {
     async function fetchBeehive() {
@@ -163,191 +169,187 @@ function UpdateBeehive() {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Atualizar Colmeia</Text>
-        <Text style={styles.subtitle}>
-          Atualize as informações da sua colmeia
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <Header title="Editar Colmeia" />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.form}>
+          {/* Nome */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome</Text>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite o nome da colmeia"
+                  value={value}
+                  onChangeText={onChange}
+                  placeholderTextColor="#9CA3AF"
+                />
+              )}
+            />
+            {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+          </View>
 
-      <View style={styles.form}>
-        {/* Nome */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome</Text>
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Digite o nome da colmeia"
-                value={value}
-                onChangeText={onChange}
-                placeholderTextColor="#9CA3AF"
-              />
-            )}
-          />
-          {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
-        </View>
-
-        {/* Tipo de Colmeia */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tipo de Colmeia</Text>
-          <Controller
-            control={control}
-            name="typeBeehive"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Digite o tipo da colmeia"
-                value={value}
-                onChangeText={onChange}
-                placeholderTextColor="#9CA3AF"
-              />
-            )}
-          />
-          {errors.typeBeehive && (
-            <Text style={styles.error}>{errors.typeBeehive.message}</Text>
-          )}
-        </View>
-
-        {/* Observações */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Observações</Text>
-          <Controller
-            control={control}
-            name="observations"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.input, styles.textarea]}
-                placeholder="Digite observações sobre a colmeia"
-                multiline
-                numberOfLines={4}
-                value={value}
-                onChangeText={onChange}
-                placeholderTextColor="#9CA3AF"
-                textAlignVertical="top"
-              />
-            )}
-          />
-        </View>
-
-        {/* Status e Data */}
-        <View style={styles.row}>
-          {/* Status */}
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Status</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => setShowStatusModal(true)}
-            >
-              <Text style={[
-                styles.selectText,
-                { color: watchedValues.status ? getStatusColor(watchedValues.status) : "#9CA3AF" }
-              ]}>
-                {watchedValues.status || "Selecione o status"}
-              </Text>
-            </TouchableOpacity>
-            {errors.status && (
-              <Text style={styles.error}>{errors.status.message}</Text>
+          {/* Tipo de Colmeia */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Tipo de Colmeia</Text>
+            <Controller
+              control={control}
+              name="typeBeehive"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite o tipo da colmeia"
+                  value={value}
+                  onChangeText={onChange}
+                  placeholderTextColor="#9CA3AF"
+                />
+              )}
+            />
+            {errors.typeBeehive && (
+              <Text style={styles.error}>{errors.typeBeehive.message}</Text>
             )}
           </View>
 
-          {/* Data de Início */}
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Data de Início</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={[
-                styles.selectText,
-                { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
-              ]}>
-                {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
-              </Text>
-            </TouchableOpacity>
-            {errors.startDate && (
-              <Text style={styles.error}>{errors.startDate.message}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Mapa */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Localização</Text>
-          <View style={styles.mapContainer}>
-            <Map
-              key={`${watchedValues.latitude}-${watchedValues.longitude}`}
-              latitude={watchedValues.latitude || 0}
-              longitude={watchedValues.longitude || 0}
-              onSelectLocation={(coords) => {
-                setValue("latitude", coords[0]);
-                setValue("longitude", coords[1]);
-              }}
+          {/* Observações */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Observações</Text>
+            <Controller
+              control={control}
+              name="observations"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[styles.input, styles.textarea]}
+                  placeholder="Digite observações sobre a colmeia"
+                  multiline
+                  numberOfLines={4}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholderTextColor="#9CA3AF"
+                  textAlignVertical="top"
+                />
+              )}
             />
           </View>
-        </View>
 
-        {/* Botão */}
-        <Button
-          onPress={handleSubmit(onSubmit)}
-          style={styles.submitButton}
-        >
-          <Text>Atualizar Colmeia</Text>
-        </Button>
-      </View>
-
-      {/* Modal de Status */}
-      <Modal
-        visible={showStatusModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowStatusModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecione o Status</Text>
-            {statusOptions.map((option) => (
+          {/* Status e Data */}
+          <View style={styles.row}>
+            {/* Status */}
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Status</Text>
               <TouchableOpacity
-                key={option.value}
-                style={styles.modalOption}
-                onPress={() => {
-                  setValue("status", option.value);
-                  setShowStatusModal(false);
-                }}
+                style={styles.selectInput}
+                onPress={() => setShowStatusModal(true)}
               >
                 <Text style={[
-                  styles.modalOptionText,
-                  { color: option.value ? getStatusColor(option.value) : "#374151" }
+                  styles.selectText,
+                  { color: watchedValues.status ? getStatusColor(watchedValues.status) : "#9CA3AF" }
                 ]}>
-                  {option.label}
+                  {statusOptions.find(opt => opt.value === watchedValues.status)?.label || "Selecione o status"}
                 </Text>
               </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.modalCancel}
-              onPress={() => setShowStatusModal(false)}
-            >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+              {errors.status && (
+                <Text style={styles.error}>{errors.status.message}</Text>
+              )}
+            </View>
 
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={handleDateChange}
-          locale="pt-BR"
-          maximumDate={new Date()}
-        />
-      )}
-    </ScrollView>
+            {/* Data de Início */}
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Data de Início</Text>
+              <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={[
+                  styles.selectText,
+                  { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
+                ]}>
+                  {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
+                </Text>
+              </TouchableOpacity>
+              {errors.startDate && (
+                <Text style={styles.error}>{errors.startDate.message}</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Mapa */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Localização</Text>
+            <View style={styles.mapContainer}>
+              <Map
+                latitude={watchedValues.latitude !== 0 ? watchedValues.latitude : -15.78}
+                longitude={watchedValues.longitude !== 0 ? watchedValues.longitude : -47.93}
+                onSelectLocation={(coords) => {
+                  setValue("latitude", coords[0]);
+                  setValue("longitude", coords[1]);
+                }}
+              />
+            </View>
+          </View>
+
+          {/* Botão */}
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            style={styles.submitButton}
+          >
+            <Text>Atualizar Colmeia</Text>
+          </Button>
+        </View>
+
+        {/* Modal de Status */}
+        <Modal
+          visible={showStatusModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowStatusModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Selecione o Status</Text>
+              {statusOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={styles.modalOption}
+                  onPress={() => {
+                    setValue("status", option.value);
+                    setShowStatusModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.modalOptionText,
+                    { color: option.value ? getStatusColor(option.value) : "#374151" }
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => setShowStatusModal(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Date Picker */}
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleDateChange}
+            locale="pt-BR"
+            maximumDate={new Date()}
+          />
+        )}
+      </ScrollView>
+      <Footer />
+    </View>
   );
 }
 
@@ -365,22 +367,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "#6B7280",
-  },
-  header: {
-    padding: 24,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-    textAlign: "center",
   },
   form: {
     padding: 24,

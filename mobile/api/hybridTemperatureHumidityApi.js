@@ -1,15 +1,15 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-    offlineCreateTemperatureHumidity,
-    offlineDeleteTemperatureHumidity,
-    offlineGetTemperatureHumidity,
-    offlineUpdateTemperatureHumidity
+  offlineCreateTemperatureHumidity,
+  offlineDeleteTemperatureHumidity,
+  offlineGetTemperatureHumidity,
+  offlineUpdateTemperatureHumidity
 } from "./offlineApi.js";
 import {
-    createTemperatureHumidity,
-    deleteTemperatureHumidity,
-    getTemperatureHumidity,
-    updateTemperatureHumidity
+  createTemperatureHumidity,
+  deleteTemperatureHumidity,
+  getTemperatureHumidity,
+  updateTemperatureHumidity
 } from "./temperatureHumidity.js";
 
 // API híbrida para temperatura e umidade

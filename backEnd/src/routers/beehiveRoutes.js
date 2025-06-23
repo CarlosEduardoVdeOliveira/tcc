@@ -1,25 +1,19 @@
-import express from "express";
-import beehiveController from "../controllers/beehiveController.js";
-import validate from "../middlewares/validate.js";
-import authenticate from "../middlewares/auth.js";
-import beehiveSchema from "../schemas/BeehiveSchema.js";
+import express from 'express';
+import beehiveController from '../controllers/beehiveController.js';
+import validate from '../middlewares/validate.js';
+import beehiveSchema from '../schemas/BeehiveSchema.js';
 
 const router = express.Router();
 
-router.get("/", authenticate, beehiveController.getAllBeehives);
-router.get("/:id", authenticate, beehiveController.getBeehiveById);
+router.get('/', beehiveController.getAllBeehives);
+router.get('/:id', beehiveController.getBeehiveById);
+router.post('/', validate(beehiveSchema), beehiveController.createBeehive);
 router.post(
-  "/",
-  authenticate,
-  validate(beehiveSchema),
-  beehiveController.createBeehive
+  '/findAllBeehivesPerStatus',
+  beehiveController.findAllBeehivePerStatus
 );
-router.put(
-  "/:id",
-  authenticate,
-  validate(beehiveSchema),
-  beehiveController.updateBeehive
-);
-router.delete("/:id", authenticate, beehiveController.deleteBeehive);
+
+router.put('/:id', validate(beehiveSchema), beehiveController.updateBeehive);
+router.delete('/:id', beehiveController.deleteBeehive);
 
 export default router;

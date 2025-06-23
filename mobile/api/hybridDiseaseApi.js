@@ -1,15 +1,15 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-    createDisease,
-    deleteDisease,
-    getDisease,
-    updateDisease
+  createDisease,
+  deleteDisease,
+  getDisease,
+  updateDisease
 } from "./diseaseApi.js";
 import {
-    offlineCreateDisease,
-    offlineDeleteDisease,
-    offlineGetDisease,
-    offlineUpdateDisease
+  offlineCreateDisease,
+  offlineDeleteDisease,
+  offlineGetDisease,
+  offlineUpdateDisease
 } from "./offlineApi.js";
 
 // API híbrida para doenças

@@ -77,6 +77,10 @@ const updateProducer = async (req, res) => {
   try {
     const data = producerSchema.partial().parse(req.body);
 
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
     const producer = await prisma.producer.update({
       where: { id },
       data,

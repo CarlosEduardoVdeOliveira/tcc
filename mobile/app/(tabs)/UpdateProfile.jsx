@@ -2,23 +2,26 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-    Alert,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
 import { getUser, updateUser } from "../../api/userApi.js";
 import Button from "../../components/Button.js";
+import Footer from "../../components/Footer.js";
+import Header from "../../components/Header.js";
 import Map from "../../components/Map.js";
 
 const isValidCpfCnpj = (value) => {
@@ -55,6 +58,10 @@ function UpdateProfile() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   const {
     control,
@@ -99,8 +106,7 @@ function UpdateProfile() {
         }
 
         // Buscar dados do usuário na API
-        const response = await getUser(id);
-        const userData = response.data;
+        const userData = await getUser();
 
         // Popular o formulário
         setValue("name", userData.name || "");
@@ -134,7 +140,7 @@ function UpdateProfile() {
         return false;
       }
 
-      await getUser(user.id);
+      await getUser();
       return true;
     } catch (error) {
       console.error("Erro no teste de conexão:", error);
@@ -175,12 +181,23 @@ function UpdateProfile() {
 
       // Formatar CPF/CNPJ removendo caracteres especiais
       if (updateData.cpfCnpj) {
-        updateData.cpfCnpj = updateData.cpfCnpj.replace(/\D/g, "");
+        updateData.cpfCnpj = String(updateData.cpfCnpj).replace(/\D/g, "");
       }
 
-      // Garantir que as coordenadas sejam números
-      updateData.latitude = Number(updateData.latitude);
-      updateData.longitude = Number(updateData.longitude);
+      // Garantir que todos os campos obrigatórios estejam corretos
+      updateData.name = String(updateData.name ?? "");
+      updateData.email = String(updateData.email ?? "");
+      updateData.status = String(updateData.status ?? "");
+      updateData.startDate = String(updateData.startDate ?? "");
+      updateData.latitude = Number(updateData.latitude ?? 0);
+      updateData.longitude = Number(updateData.longitude ?? 0);
+
+      // Validação manual dos campos obrigatórios
+      if (!updateData.name || !updateData.email || !updateData.cpfCnpj || !updateData.startDate || !updateData.status || !updateData.latitude || !updateData.longitude) {
+        Alert.alert("Erro", "Preencha todos os campos obrigatórios antes de atualizar o perfil.");
+        setLoading(false);
+        return;
+      }
 
       // Garantir que a data esteja no formato correto
       if (updateData.startDate) {
@@ -190,16 +207,10 @@ function UpdateProfile() {
         }
       }
 
-      // Garantir que o status seja válido
-      if (!updateData.status || updateData.status.trim() === "") {
-        delete updateData.status;
-      }
-
       await updateUser(updateData, user.id);
       
       // Buscar os dados atualizados da API
-      const updatedResponse = await getUser(user.id);
-      const updatedUserData = updatedResponse.data;
+      const updatedUserData = await getUser();
       
       // Atualizar o AsyncStorage com os dados mais recentes da API
       await AsyncStorage.setItem("user", JSON.stringify(updatedUserData));
@@ -246,244 +257,241 @@ function UpdateProfile() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Editar Perfil</Text>
-        <Text style={styles.subtitle}>
-          Atualize suas informações pessoais
-        </Text>
-      </View>
-
-      <View style={styles.form}>
-        {/* Nome e Email */}
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Nome</Text>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Digite seu nome"
-                  value={value}
-                  onChangeText={onChange}
-                  placeholderTextColor="#9CA3AF"
-                />
-              )}
-            />
-            {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
-          </View>
-
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>E-mail</Text>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Digite seu email"
-                  value={value}
-                  onChangeText={onChange}
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              )}
-            />
-            {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
-          </View>
-        </View>
-
-        {/* CPF/CNPJ e Senha */}
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>CPF/CNPJ</Text>
-            <Controller
-              control={control}
-              name="cpfCnpj"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Digite seu CPF ou CNPJ"
-                  value={value}
-                  onChangeText={onChange}
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="numeric"
-                />
-              )}
-            />
-            {errors.cpfCnpj && <Text style={styles.error}>{errors.cpfCnpj.message}</Text>}
-          </View>
-
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Senha (opcional)</Text>
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.passwordContainer}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <Header title="Editar Perfil" />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.form}>
+          {/* Nome e Email */}
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Nome</Text>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field: { onChange, value } }) => (
                   <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    placeholder="Deixe em branco para manter a senha atual"
+                    style={styles.input}
+                    placeholder="Digite seu nome"
                     value={value}
                     onChangeText={onChange}
                     placeholderTextColor="#9CA3AF"
-                    secureTextEntry={viewPassword}
+                  />
+                )}
+              />
+              {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+            </View>
+
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>E-mail</Text>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Digite seu email"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="email-address"
                     autoCapitalize="none"
                   />
-                  <TouchableOpacity
-                    onPress={() => setViewPassword(!viewPassword)}
-                    style={styles.eyeButton}
-                  >
-                    <Icon name={viewPassword ? "eye-off" : "eye"} size={24} color="#d1d1d1" />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-            {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
-          </View>
-        </View>
-
-        {/* Status e Data */}
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Status</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => setShowStatusModal(true)}
-            >
-              <Text style={[
-                styles.selectText,
-                { color: watchedValues.status ? getStatusColor(watchedValues.status) : "#9CA3AF" }
-              ]}>
-                {watchedValues.status || "Selecione o status"}
-              </Text>
-            </TouchableOpacity>
-            {watchedValues.status && (
-              <View style={styles.statusIndicator}>
-                <View style={[
-                  styles.statusDot,
-                  { backgroundColor: getStatusColor(watchedValues.status) }
-                ]} />
-                <Text style={[
-                  styles.statusText,
-                  { color: getStatusColor(watchedValues.status) }
-                ]}>
-                  Status atual: {watchedValues.status}
-                </Text>
-              </View>
-            )}
-            {errors.status && <Text style={styles.error}>{errors.status.message}</Text>}
+                )}
+              />
+              {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+            </View>
           </View>
 
-          <View style={[styles.inputGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Data de Início</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* CPF/CNPJ e Senha */}
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>CPF/CNPJ</Text>
+              <Controller
+                control={control}
+                name="cpfCnpj"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Digite seu CPF ou CNPJ"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                  />
+                )}
+              />
+              {errors.cpfCnpj && <Text style={styles.error}>{errors.cpfCnpj.message}</Text>}
+            </View>
+
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Senha (opcional)</Text>
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="Deixe em branco para manter a senha atual"
+                      value={value}
+                      onChangeText={onChange}
+                      placeholderTextColor="#9CA3AF"
+                      secureTextEntry={viewPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setViewPassword(!viewPassword)}
+                      style={styles.eyeButton}
+                    >
+                      <Icon name={viewPassword ? "eye-off" : "eye"} size={24} color="#d1d1d1" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+              {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
+            </View>
+          </View>
+
+          {/* Status e Data */}
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Status</Text>
               <TouchableOpacity
-                style={[styles.selectInput, { flex: 1 }]}
-                onPress={() => setShowDatePicker(true)}
+                style={styles.selectInput}
+                onPress={() => setShowStatusModal(true)}
               >
                 <Text style={[
                   styles.selectText,
-                  { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
+                  { color: watchedValues.status ? getStatusColor(watchedValues.status) : "#9CA3AF" }
                 ]}>
-                  {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
+                  {watchedValues.status || "Selecione o status"}
                 </Text>
               </TouchableOpacity>
+              {watchedValues.status && (
+                <View style={styles.statusIndicator}>
+                  <View style={[
+                    styles.statusDot,
+                    { backgroundColor: getStatusColor(watchedValues.status) }
+                  ]} />
+                  <Text style={[
+                    styles.statusText,
+                    { color: getStatusColor(watchedValues.status) }
+                  ]}>
+                    Status atual: {watchedValues.status}
+                  </Text>
+                </View>
+              )}
+              {errors.status && <Text style={styles.error}>{errors.status.message}</Text>}
+            </View>
+
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Data de Início</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity
+                  style={[styles.selectInput, { flex: 1 }]}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={[
+                    styles.selectText,
+                    { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
+                  ]}>
+                    {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
+                  style={{ marginLeft: 8 }}
+                >
+                  <Icon name="calendar" size={24} color="#d1d1d1" />
+                </TouchableOpacity>
+              </View>
+              {errors.startDate && <Text style={styles.error}>{errors.startDate.message}</Text>}
+            </View>
+          </View>
+
+          {/* Mapa */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Localização</Text>
+            <View style={styles.mapContainer}>
+              <Map
+                key={`${watchedValues.latitude ?? -23.55052}-${watchedValues.longitude ?? -46.633308}`}
+                latitude={watchedValues.latitude !== undefined && watchedValues.latitude !== null ? watchedValues.latitude : -23.55052}
+                longitude={watchedValues.longitude !== undefined && watchedValues.longitude !== null ? watchedValues.longitude : -46.633308}
+                onSelectLocation={(coords) => {
+                  setValue("latitude", coords[0]);
+                  setValue("longitude", coords[1]);
+                }}
+              />
+            </View>
+            <View style={styles.coordinatesInfo}>
+              <Text style={styles.coordinatesText}>
+                <Text style={styles.coordinatesLabel}>Latitude:</Text> {watchedValues.latitude ? watchedValues.latitude.toFixed(6) : "Não definida"}
+              </Text>
+              <Text style={styles.coordinatesText}>
+                <Text style={styles.coordinatesLabel}>Longitude:</Text> {watchedValues.longitude ? watchedValues.longitude.toFixed(6) : "Não definida"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Botão */}
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            style={styles.submitButton}
+            disabled={loading}
+          ><Text>{loading ? "Atualizando..." : "Atualizar Perfil"}</Text></Button>
+        </View>
+
+        {/* Modal de Status */}
+        <Modal
+          visible={showStatusModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowStatusModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Selecione o Status</Text>
+              {statusOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={styles.modalOption}
+                  onPress={() => {
+                    setValue("status", option.value);
+                    setShowStatusModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.modalOptionText,
+                    { color: option.value ? getStatusColor(option.value) : "#374151" }
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
               <TouchableOpacity
-                onPress={() => setShowDatePicker(true)}
-                style={{ marginLeft: 8 }}
+                style={styles.modalCancel}
+                onPress={() => setShowStatusModal(false)}
               >
-                <Icon name="calendar" size={24} color="#d1d1d1" />
+                <Text style={styles.modalCancelText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
-            {errors.startDate && <Text style={styles.error}>{errors.startDate.message}</Text>}
           </View>
-        </View>
+        </Modal>
 
-        {/* Mapa */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Localização</Text>
-          <View style={styles.mapContainer}>
-            <Map
-              key={`${watchedValues.latitude}-${watchedValues.longitude}`}
-              latitude={watchedValues.latitude || -23.55052}
-              longitude={watchedValues.longitude || -46.633308}
-              onSelectLocation={(coords) => {
-                setValue("latitude", coords[0]);
-                setValue("longitude", coords[1]);
-              }}
-            />
-          </View>
-          <View style={styles.coordinatesInfo}>
-            <Text style={styles.coordinatesText}>
-              <Text style={styles.coordinatesLabel}>Latitude:</Text> {watchedValues.latitude ? watchedValues.latitude.toFixed(6) : "Não definida"}
-            </Text>
-            <Text style={styles.coordinatesText}>
-              <Text style={styles.coordinatesLabel}>Longitude:</Text> {watchedValues.longitude ? watchedValues.longitude.toFixed(6) : "Não definida"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Botão */}
-        <Button
-          onPress={handleSubmit(onSubmit)}
-          style={styles.submitButton}
-          disabled={loading}
-        ><Text>{loading ? "Atualizando..." : "Atualizar Perfil"}</Text></Button>
-      </View>
-
-      {/* Modal de Status */}
-      <Modal
-        visible={showStatusModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowStatusModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecione o Status</Text>
-            {statusOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={styles.modalOption}
-                onPress={() => {
-                  setValue("status", option.value);
-                  setShowStatusModal(false);
-                }}
-              >
-                <Text style={[
-                  styles.modalOptionText,
-                  { color: option.value ? getStatusColor(option.value) : "#374151" }
-                ]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.modalCancel}
-              onPress={() => setShowStatusModal(false)}
-            >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={handleDateChange}
-          locale="pt-BR"
-          maximumDate={new Date()}
-        />
-      )}
-    </ScrollView>
+        {/* Date Picker */}
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleDateChange}
+            locale="pt-BR"
+            maximumDate={new Date()}
+          />
+        )}
+      </ScrollView>
+      <Footer />
+    </SafeAreaView>
   );
 }
 
@@ -491,22 +499,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",
-  },
-  header: {
-    padding: 24,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-    textAlign: "center",
   },
   form: {
     padding: 24,

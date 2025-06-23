@@ -1,12 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -32,10 +32,9 @@ function Profile() {
       }
 
       const parsedUser = JSON.parse(userData);
-      const id = parsedUser.id;
 
-      const response = await getUser(id);
-      setUser(response.data);
+      const response = await getUser();
+      setUser(response);
     } catch (error) {
       console.error("Erro ao buscar usuário:", error);
     } finally {
@@ -53,6 +52,10 @@ function Profile() {
       loadUser();
     }, [])
   );
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   const logOut = async () => {
     await AsyncStorage.removeItem("user_token");
@@ -117,41 +120,36 @@ function Profile() {
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" />
-      
+      <Header pathName="/" title="Meu Perfil" subtitle={user.email} />
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cabeçalho do Perfil */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileInfo}>
-            <View style={styles.avatarContainer}>
-              <Icon name="person" size={32} color="#fff" />
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userEmail}>{user.email}</Text>
-            </View>
+        {/* Informações do Usuário */}
+        <View style={styles.profileInfo}>
+          <View style={styles.avatarContainer}>
+            <Icon name="person" size={32} color="#fff" />
           </View>
-          
-          <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={styles.editProfileButton}
-              onPress={updateProfile}
-            >
-              <Icon name="pencil" size={16} color="#fff" />
-              <Text style={styles.editProfileText}>Editar Perfil</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={logOut}
-            >
-              <Icon name="log-out" size={16} color="#fff" />
-              <Text style={styles.logoutText}>Sair</Text>
-            </TouchableOpacity>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userEmail}>{user.email}</Text>
           </View>
+        </View>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.editProfileButton}
+            onPress={updateProfile}
+          >
+            <Icon name="pencil" size={16} color="#fff" />
+            <Text style={styles.editProfileText}>Editar Perfil</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={logOut}
+          >
+            <Icon name="log-out" size={16} color="#fff" />
+            <Text style={styles.logoutText}>Sair</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Informações do Usuário */}
@@ -300,20 +298,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "#666",
-  },
-  profileHeader: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   profileInfo: {
     flexDirection: "row",
