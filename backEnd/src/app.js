@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import { ensureDatabaseConnection, optionalDatabaseConnection } from "./middlewares/database.js";
 import authenticate from "./middlewares/auth.js";
 import activityRoutes from "./routers/activityRoutes.js";
 import beehiveRoutes from "./routers/beehiveRoutes.js";
@@ -24,15 +25,16 @@ app.get("/api/v1/health", (req, res) => {
   });
 });
 
-app.use("/api/v1/login", loginRoutes);
-app.use("/api/v1/producer", producerRoutes);
-app.use("/api/v1/beehive", authenticate, beehiveRoutes);
-app.use("/api/v1/activity", authenticate, activityRoutes);
-app.use("/api/v1/disease", authenticate, diseaseRoutes);
-app.use("/api/v1/food", authenticate, foodRoutes);
-app.use("/api/v1/production_honey", authenticate, productionHoneyRoutes);
+app.use("/api/v1/login", optionalDatabaseConnection, loginRoutes);
+app.use("/api/v1/producer", ensureDatabaseConnection, producerRoutes);
+app.use("/api/v1/beehive", ensureDatabaseConnection, authenticate, beehiveRoutes);
+app.use("/api/v1/activity", ensureDatabaseConnection, authenticate, activityRoutes);
+app.use("/api/v1/disease", ensureDatabaseConnection, authenticate, diseaseRoutes);
+app.use("/api/v1/food", ensureDatabaseConnection, authenticate, foodRoutes);
+app.use("/api/v1/production_honey", ensureDatabaseConnection, authenticate, productionHoneyRoutes);
 app.use(
   "/api/v1/temperature_humidity",
+  ensureDatabaseConnection,
   authenticate,
   temperatureHumidityRoutes
 );

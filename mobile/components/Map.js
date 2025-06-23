@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
@@ -15,13 +15,14 @@ function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
 
   // Memoize the callback to prevent infinite re-renders
   const handleLocationSelect = useCallback((coords) => {
+    console.log("[Map] handleLocationSelect chamado com:", coords);
     if (onSelectLocationRef.current) {
       onSelectLocationRef.current([coords.latitude, coords.longitude]);
     }
   }, []);
 
   useEffect(() => {
-    console.log("Map useEffect - latitude:", latitude, "longitude:", longitude);
+    console.log("[Map] useEffect - latitude:", latitude, "longitude:", longitude);
     
     // Se coordenadas foram passadas como props, use-as como posição inicial
     if (latitude && longitude && latitude !== 0 && longitude !== 0) {
@@ -29,7 +30,7 @@ function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
         latitude: parseFloat(latitude), 
         longitude: parseFloat(longitude) 
       };
-      console.log("Setting marker position from props:", coords);
+      console.log("[Map] Setting marker position from props:", coords);
       setMarkerPosition(coords);
       setIsLocationLoaded(true);
       return;
@@ -37,28 +38,58 @@ function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
 
     // Se não há coordenadas iniciais válidas, use geolocalização
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.warn("Permissão de localização negada.");
+      try {
+        console.log("[Map] Solicitando permissão de localização...");
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        
+        if (status !== "granted") {
+          console.warn("[Map] Permissão de localização negada.");
+          Alert.alert(
+            "Permissão Necessária",
+            "Para usar o mapa, é necessário permitir o acesso à localização.",
+            [{ text: "OK" }]
+          );
+          
+          const fallback = { latitude: -19.55, longitude: -42.64 }; // Coordenadas padrão
+          console.log("[Map] Using fallback coordinates:", fallback);
+          setMarkerPosition(fallback);
+          setIsLocationLoaded(true);
+          handleLocationSelect(fallback);
+          return;
+        }
+
+        console.log("[Map] Obtendo localização atual...");
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+          timeout: 10000,
+        });
+        
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        console.log("[Map] Localização atual obtida:", coords);
+        setMarkerPosition(coords);
+        setIsLocationLoaded(true);
+        handleLocationSelect(coords);
+      } catch (error) {
+        console.error("[Map] Erro ao obter localização:", error);
+        
         const fallback = { latitude: -19.55, longitude: -42.64 };
-        console.log("Using fallback coordinates:", fallback);
+        console.log("[Map] Using fallback coordinates due to error:", fallback);
         setMarkerPosition(fallback);
         setIsLocationLoaded(true);
         handleLocationSelect(fallback);
-        return;
       }
-
-      const location = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-      console.log("Using current location:", coords);
-      setMarkerPosition(coords);
-      setIsLocationLoaded(true);
-      handleLocationSelect(coords);
     })();
   }, [latitude, longitude, handleLocationSelect]);
+
+  const handleMapPress = (e) => {
+    const coords = e.nativeEvent.coordinate;
+    console.log("[Map] Mapa pressionado em:", coords);
+    setMarkerPosition(coords);
+    handleLocationSelect(coords);
+  };
 
   if (!isLocationLoaded) {
     return (
@@ -76,11 +107,7 @@ function Map({ onSelectLocation, latitude, longitude, style, ...props }) {
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       }}
-      onPress={(e) => {
-        const coords = e.nativeEvent.coordinate;
-        setMarkerPosition(coords);
-        handleLocationSelect(coords);
-      }}
+      onPress={handleMapPress}
       {...props}
     >
       <Marker coordinate={markerPosition} />

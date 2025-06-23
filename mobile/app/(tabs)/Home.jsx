@@ -1,15 +1,12 @@
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
 import { Image, StyleSheet, Text, View } from "react-native";
 import ImgHero from "../../assets/images/imgHero.png"; // Certifique-se de que a imagem existe
+import Button from "../../components/Button.js";
 import Container from "../../components/Container.js";
 import Footer from "../../components/Footer.js";
-import CreateAccount from "./CreateAccount.jsx";
-import Login from "./Login.jsx";
 
 function Home() {
-  /* const navigation = useNavigation();
-   */
-  const Tab = createBottomTabNavigator();
+  const navigation = useNavigation();
 
   return (
     <Container>
@@ -22,14 +19,19 @@ function Home() {
         </View>
 
         <View style={styles.buttons}>
-          <Tab.Screen
-            name="Já tenho conta"
-            component={Login}
+          <Button 
+            onPress={() => navigation.navigate("Login")}
             style={styles.primaryButton}
-            textStyle={{ color: "#6B4C00" }}
-          />
+          >
+            <Text style={styles.primaryButtonText}>Já tenho conta</Text>
+          </Button>
 
-          <Tab.Screen name="Quero me cadastrar" component={CreateAccount} />
+          <Button 
+            onPress={() => navigation.navigate("CreateAccount")}
+            style={styles.secondaryButton}
+          >
+            <Text style={styles.secondaryButtonText}>Quero me cadastrar</Text>
+          </Button>
         </View>
 
         <Image source={ImgHero} style={styles.image} resizeMode="contain" />
@@ -62,7 +64,6 @@ const styles = StyleSheet.create({
   },
   buttons: {
     width: "75%",
-    height: 75,
     marginBottom: 20,
     marginRight: 40,
     marginLeft: 40,
@@ -70,6 +71,19 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: "#FACC15",
+  },
+  primaryButtonText: {
+    color: "#6B4C00",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  secondaryButton: {
+    backgroundColor: "#78350f",
+  },
+  secondaryButtonText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 16,
   },
   image: {
     width: 250,

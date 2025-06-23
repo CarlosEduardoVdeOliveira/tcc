@@ -14,13 +14,13 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
 import { createBeehive } from "../../api/beehiveApi.js";
 import Button from "../../components/Button.js";
 import Footer from "../../components/Footer.js";
 import Header from "../../components/Header.js";
+import Map from "../../components/Map.js";
 
 const schema = z.object({
   name: z.string().min(3, "Nome é obrigatório"),
@@ -75,6 +75,7 @@ function CreateBeehive() {
           if (parsed.latitude && parsed.longitude) {
             const userLat = Number(parsed.latitude);
             const userLng = Number(parsed.longitude);
+            console.log("Usando coordenadas do usuário:", { latitude: userLat, longitude: userLng });
             setCoords({ latitude: userLat, longitude: userLng });
             setValue("latitude", userLat);
             setValue("longitude", userLng);
@@ -93,11 +94,15 @@ function CreateBeehive() {
       return;
     }
 
+    // Verificar se as coordenadas estão presentes
+    if (!data.latitude || !data.longitude) {
+      Alert.alert("Erro", "Por favor, selecione a localização da colmeia no mapa.");
+      return;
+    }
+
     try {
       console.log("Dados do formulário:", data);
-      console.log("Status selecionado:", data.status);
-      console.log("Tipo do status:", typeof data.status);
-      console.log("Valor exato do status:", JSON.stringify(data.status));
+      console.log("Coordenadas finais:", { latitude: data.latitude, longitude: data.longitude });
       console.log("Dados sendo enviados para criar colmeia:", { ...data, producerId });
       
       await createBeehive({
@@ -121,9 +126,9 @@ function CreateBeehive() {
     }
   };
 
-  const handleMapPress = (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    console.log("Coordenadas selecionadas:", { latitude, longitude });
+  const handleLocationSelect = (location) => {
+    const [latitude, longitude] = location;
+    console.log("Nova localização selecionada:", { latitude, longitude });
     setCoords({ latitude, longitude });
     setValue("latitude", latitude);
     setValue("longitude", longitude);
@@ -248,18 +253,12 @@ function CreateBeehive() {
             <Text style={styles.mapSubtitle}>
               Toque no mapa para definir a localização da colmeia
             </Text>
-            <MapView
+            <Map
+              onSelectLocation={handleLocationSelect}
+              latitude={coords.latitude}
+              longitude={coords.longitude}
               style={styles.map}
-              initialRegion={{
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }}
-              onPress={handleMapPress}
-            >
-              <Marker coordinate={coords} />
-            </MapView>
+            />
             
             {/* Informações das coordenadas */}
             <View style={styles.coordinatesInfo}>
