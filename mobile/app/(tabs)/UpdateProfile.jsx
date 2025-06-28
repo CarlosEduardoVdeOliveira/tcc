@@ -129,7 +129,7 @@ function UpdateProfile() {
             setSelectedDate(new Date(userData.startDate));
           }
         } catch (error) {
-          console.log("Sem conexão, carregando dados locais");
+          console.log(error, "Sem conexão, carregando dados locais");
           const userData = JSON.parse(userJson);
           setValue("name", userData.name || "");
           setValue("email", userData.email || "");
@@ -284,307 +284,313 @@ function UpdateProfile() {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <>
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.form}>
-              {/* Nome e Email */}
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.label}>Nome</Text>
-                  <Controller
-                    control={control}
-                    name="name"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Digite seu nome"
-                        value={value}
-                        onChangeText={onChange}
-                        placeholderTextColor="#9CA3AF"
-                      />
-                    )}
-                  />
-                  {errors.name && (
-                    <Text style={styles.error}>{errors.name.message}</Text>
-                  )}
-                </View>
-
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.label}>E-mail</Text>
-                  <Controller
-                    control={control}
-                    name="email"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Digite seu email"
-                        value={value}
-                        onChangeText={onChange}
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                      />
-                    )}
-                  />
-                  {errors.email && (
-                    <Text style={styles.error}>{errors.email.message}</Text>
-                  )}
-                </View>
-              </View>
-
-              {/* CPF/CNPJ e Senha */}
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.label}>CPF/CNPJ</Text>
-                  <Controller
-                    control={control}
-                    name="cpfCnpj"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Digite seu CPF ou CNPJ"
-                        value={value}
-                        onChangeText={onChange}
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="numeric"
-                      />
-                    )}
-                  />
-                  {errors.cpfCnpj && (
-                    <Text style={styles.error}>{errors.cpfCnpj.message}</Text>
-                  )}
-                </View>
-
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.label}>Senha (opcional)</Text>
-                  <Controller
-                    control={control}
-                    name="password"
-                    render={({ field: { onChange, value } }) => (
-                      <View style={styles.passwordContainer}>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.form}>
+                {/* Nome e Email */}
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>Nome</Text>
+                    <Controller
+                      control={control}
+                      name="name"
+                      render={({ field: { onChange, value } }) => (
                         <TextInput
-                          style={[styles.input, { flex: 1 }]}
-                          placeholder="Deixe em branco para manter a senha atual"
+                          style={styles.input}
+                          placeholder="Digite seu nome"
                           value={value}
                           onChangeText={onChange}
                           placeholderTextColor="#9CA3AF"
-                          secureTextEntry={viewPassword}
+                        />
+                      )}
+                    />
+                    {errors.name && (
+                      <Text style={styles.error}>{errors.name.message}</Text>
+                    )}
+                  </View>
+
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>E-mail</Text>
+                    <Controller
+                      control={control}
+                      name="email"
+                      render={({ field: { onChange, value } }) => (
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Digite seu email"
+                          value={value}
+                          onChangeText={onChange}
+                          placeholderTextColor="#9CA3AF"
+                          keyboardType="email-address"
                           autoCapitalize="none"
                         />
-                        <TouchableOpacity
-                          onPress={() => setViewPassword(!viewPassword)}
-                          style={styles.eyeButton}
-                        >
-                          <Icon
-                            name={viewPassword ? "eye-off" : "eye"}
-                            size={24}
-                            color="#d1d1d1"
-                          />
-                        </TouchableOpacity>
-                      </View>
+                      )}
+                    />
+                    {errors.email && (
+                      <Text style={styles.error}>{errors.email.message}</Text>
                     )}
-                  />
-                  {errors.password && (
-                    <Text style={styles.error}>{errors.password.message}</Text>
-                  )}
+                  </View>
                 </View>
-              </View>
 
-              {/* Status e Data */}
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.label}>Status</Text>
-                  <TouchableOpacity
-                    style={styles.selectInput}
-                    onPress={() => setShowStatusModal(true)}
-                  >
-                    <Text
-                      style={[
-                        styles.selectText,
-                        {
-                          color: watchedValues.status
-                            ? getStatusColor(watchedValues.status)
-                            : "#9CA3AF",
-                        },
-                      ]}
-                    >
-                      {watchedValues.status || "Selecione o status"}
-                    </Text>
-                  </TouchableOpacity>
-                  {watchedValues.status && (
-                    <View style={styles.statusIndicator}>
-                      <View
-                        style={[
-                          styles.statusDot,
-                          {
-                            backgroundColor: getStatusColor(
-                              watchedValues.status
-                            ),
-                          },
-                        ]}
-                      />
-                      <Text
-                        style={[
-                          styles.statusText,
-                          { color: getStatusColor(watchedValues.status) },
-                        ]}
-                      >
-                        Status atual: {watchedValues.status}
+                {/* CPF/CNPJ e Senha */}
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>CPF/CNPJ</Text>
+                    <Controller
+                      control={control}
+                      name="cpfCnpj"
+                      render={({ field: { onChange, value } }) => (
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Digite seu CPF ou CNPJ"
+                          value={value}
+                          onChangeText={onChange}
+                          placeholderTextColor="#9CA3AF"
+                          keyboardType="numeric"
+                        />
+                      )}
+                    />
+                    {errors.cpfCnpj && (
+                      <Text style={styles.error}>{errors.cpfCnpj.message}</Text>
+                    )}
+                  </View>
+
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>Senha (opcional)</Text>
+                    <Controller
+                      control={control}
+                      name="password"
+                      render={({ field: { onChange, value } }) => (
+                        <View style={styles.passwordContainer}>
+                          <TextInput
+                            style={[styles.input, { flex: 1 }]}
+                            placeholder="Deixe em branco para manter a senha atual"
+                            value={value}
+                            onChangeText={onChange}
+                            placeholderTextColor="#9CA3AF"
+                            secureTextEntry={viewPassword}
+                            autoCapitalize="none"
+                          />
+                          <TouchableOpacity
+                            onPress={() => setViewPassword(!viewPassword)}
+                            style={styles.eyeButton}
+                          >
+                            <Icon
+                              name={viewPassword ? "eye-off" : "eye"}
+                              size={24}
+                              color="#d1d1d1"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    />
+                    {errors.password && (
+                      <Text style={styles.error}>
+                        {errors.password.message}
                       </Text>
-                    </View>
-                  )}
-                  {errors.status && (
-                    <Text style={styles.error}>{errors.status.message}</Text>
-                  )}
+                    )}
+                  </View>
                 </View>
 
-                <View style={[styles.inputGroup, styles.halfWidth]}>
-                  <Text style={styles.label}>Data de Início</Text>
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                {/* Status e Data */}
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>Status</Text>
                     <TouchableOpacity
-                      style={[styles.selectInput, { flex: 1 }]}
-                      onPress={() => setShowDatePicker(true)}
+                      style={styles.selectInput}
+                      onPress={() => setShowStatusModal(true)}
                     >
                       <Text
                         style={[
                           styles.selectText,
                           {
-                            color: watchedValues.startDate
-                              ? "#374151"
+                            color: watchedValues.status
+                              ? getStatusColor(watchedValues.status)
                               : "#9CA3AF",
                           },
                         ]}
                       >
-                        {watchedValues.startDate
-                          ? formatDateToBrazilian(watchedValues.startDate)
-                          : "Selecione a data"}
+                        {watchedValues.status || "Selecione o status"}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setShowDatePicker(true)}
-                      style={{ marginLeft: 8 }}
+                    {watchedValues.status && (
+                      <View style={styles.statusIndicator}>
+                        <View
+                          style={[
+                            styles.statusDot,
+                            {
+                              backgroundColor: getStatusColor(
+                                watchedValues.status
+                              ),
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.statusText,
+                            { color: getStatusColor(watchedValues.status) },
+                          ]}
+                        >
+                          Status atual: {watchedValues.status}
+                        </Text>
+                      </View>
+                    )}
+                    {errors.status && (
+                      <Text style={styles.error}>{errors.status.message}</Text>
+                    )}
+                  </View>
+
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>Data de Início</Text>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      <Icon name="calendar" size={24} color="#d1d1d1" />
+                      <TouchableOpacity
+                        style={[styles.selectInput, { flex: 1 }]}
+                        onPress={() => setShowDatePicker(true)}
+                      >
+                        <Text
+                          style={[
+                            styles.selectText,
+                            {
+                              color: watchedValues.startDate
+                                ? "#374151"
+                                : "#9CA3AF",
+                            },
+                          ]}
+                        >
+                          {watchedValues.startDate
+                            ? formatDateToBrazilian(watchedValues.startDate)
+                            : "Selecione a data"}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(true)}
+                        style={{ marginLeft: 8 }}
+                      >
+                        <Icon name="calendar" size={24} color="#d1d1d1" />
+                      </TouchableOpacity>
+                    </View>
+                    {errors.startDate && (
+                      <Text style={styles.error}>
+                        {errors.startDate.message}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Mapa */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Localização</Text>
+                  <View style={styles.mapContainer}>
+                    <Map
+                      key={`${watchedValues.latitude ?? -23.55052}-${
+                        watchedValues.longitude ?? -46.633308
+                      }`}
+                      latitude={
+                        watchedValues.latitude !== undefined &&
+                        watchedValues.latitude !== null
+                          ? watchedValues.latitude
+                          : -23.55052
+                      }
+                      longitude={
+                        watchedValues.longitude !== undefined &&
+                        watchedValues.longitude !== null
+                          ? watchedValues.longitude
+                          : -46.633308
+                      }
+                      onSelectLocation={(coords) => {
+                        setValue("latitude", coords[0]);
+                        setValue("longitude", coords[1]);
+                      }}
+                    />
+                  </View>
+                  <View style={styles.coordinatesInfo}>
+                    <Text style={styles.coordinatesText}>
+                      <Text style={styles.coordinatesLabel}>Latitude:</Text>{" "}
+                      {watchedValues.latitude
+                        ? watchedValues.latitude.toFixed(6)
+                        : "Não definida"}
+                    </Text>
+                    <Text style={styles.coordinatesText}>
+                      <Text style={styles.coordinatesLabel}>Longitude:</Text>{" "}
+                      {watchedValues.longitude
+                        ? watchedValues.longitude.toFixed(6)
+                        : "Não definida"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Botão */}
+                <Button
+                  onPress={handleSubmit(onSubmit)}
+                  style={styles.submitButton}
+                  disabled={loading}
+                >
+                  <Text>{loading ? "Atualizando..." : "Atualizar Perfil"}</Text>
+                </Button>
+              </View>
+
+              {/* Modal de Status */}
+              <Modal
+                visible={showStatusModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowStatusModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Selecione o Status</Text>
+                    {statusOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={styles.modalOption}
+                        onPress={() => {
+                          setValue("status", option.value);
+                          setShowStatusModal(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.modalOptionText,
+                            {
+                              color: option.value
+                                ? getStatusColor(option.value)
+                                : "#374151",
+                            },
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                    <TouchableOpacity
+                      style={styles.modalCancel}
+                      onPress={() => setShowStatusModal(false)}
+                    >
+                      <Text style={styles.modalCancelText}>Cancelar</Text>
                     </TouchableOpacity>
                   </View>
-                  {errors.startDate && (
-                    <Text style={styles.error}>{errors.startDate.message}</Text>
-                  )}
                 </View>
-              </View>
+              </Modal>
 
-              {/* Mapa */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Localização</Text>
-                <View style={styles.mapContainer}>
-                  <Map
-                    key={`${watchedValues.latitude ?? -23.55052}-${
-                      watchedValues.longitude ?? -46.633308
-                    }`}
-                    latitude={
-                      watchedValues.latitude !== undefined &&
-                      watchedValues.latitude !== null
-                        ? watchedValues.latitude
-                        : -23.55052
-                    }
-                    longitude={
-                      watchedValues.longitude !== undefined &&
-                      watchedValues.longitude !== null
-                        ? watchedValues.longitude
-                        : -46.633308
-                    }
-                    onSelectLocation={(coords) => {
-                      setValue("latitude", coords[0]);
-                      setValue("longitude", coords[1]);
-                    }}
-                  />
-                </View>
-                <View style={styles.coordinatesInfo}>
-                  <Text style={styles.coordinatesText}>
-                    <Text style={styles.coordinatesLabel}>Latitude:</Text>{" "}
-                    {watchedValues.latitude
-                      ? watchedValues.latitude.toFixed(6)
-                      : "Não definida"}
-                  </Text>
-                  <Text style={styles.coordinatesText}>
-                    <Text style={styles.coordinatesLabel}>Longitude:</Text>{" "}
-                    {watchedValues.longitude
-                      ? watchedValues.longitude.toFixed(6)
-                      : "Não definida"}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Botão */}
-              <Button
-                onPress={handleSubmit(onSubmit)}
-                style={styles.submitButton}
-                disabled={loading}
-              >
-                <Text>{loading ? "Atualizando..." : "Atualizar Perfil"}</Text>
-              </Button>
-            </View>
-
-            {/* Modal de Status */}
-            <Modal
-              visible={showStatusModal}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowStatusModal(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Selecione o Status</Text>
-                  {statusOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={styles.modalOption}
-                      onPress={() => {
-                        setValue("status", option.value);
-                        setShowStatusModal(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.modalOptionText,
-                          {
-                            color: option.value
-                              ? getStatusColor(option.value)
-                              : "#374151",
-                          },
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    style={styles.modalCancel}
-                    onPress={() => setShowStatusModal(false)}
-                  >
-                    <Text style={styles.modalCancelText}>Cancelar</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
-
-            {/* Date Picker */}
-            {showDatePicker && (
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={handleDateChange}
-                locale="pt-BR"
-                maximumDate={new Date()}
-              />
-            )}
-          </ScrollView>
-          <Footer />
+              {/* Date Picker */}
+              {showDatePicker && (
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={handleDateChange}
+                  locale="pt-BR"
+                  maximumDate={new Date()}
+                />
+              )}
+            </ScrollView>
+            <Footer />
           </>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
