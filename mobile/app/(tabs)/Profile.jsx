@@ -402,6 +402,8 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     flexDirection: "row",
+    marginBottom: 16,
+    marginTop: 16,
     gap: 12,
   },
   editProfileButton: {

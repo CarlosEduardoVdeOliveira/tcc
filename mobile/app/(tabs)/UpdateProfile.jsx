@@ -283,6 +283,7 @@ function UpdateProfile() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <>
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
@@ -582,8 +583,9 @@ function UpdateProfile() {
                 maximumDate={new Date()}
               />
             )}
-            <Footer />
           </ScrollView>
+          <Footer />
+          </>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -598,6 +600,7 @@ const styles = StyleSheet.create({
   form: {
     padding: 24,
     paddingTop: 0,
+    top: 16,
   },
   inputGroup: {
     marginBottom: 20,
@@ -710,6 +713,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 32,
+    bottom: 16,
   },
   modalOverlay: {
     flex: 1,
