@@ -46,48 +46,47 @@ function Beehives() {
   }, [navigation]);
 
   useEffect(() => {
-  if (!userId || !userToken) return;
+    if (!userId || !userToken) return;
 
-  async function fetchBeehives() {
-    try {
-      setLoading(true);
-
-      const response = await getBeehives({
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      });
-
-      const userBeehives = response.data.filter(
-        (b) => b.producerId === userId
-      );
-
-      // Salvar cache offline
-      await AsyncStorage.setItem(`beehives_${userId}`, JSON.stringify(userBeehives));
-
-      setBeehives(userBeehives);
-    } catch (err) {
-      console.error("Erro ao carregar colmeias da API:", err);
-      console.warn("Tentando carregar colmeias do cache...");
-
+    async function fetchBeehives() {
       try {
-        const cachedBeehives = await AsyncStorage.getItem(`beehives_${userId}`);
-        if (cachedBeehives) {
-          setBeehives(JSON.parse(cachedBeehives));
-        } else {
-          console.warn("Nenhuma colmeia salva no cache");
+        setLoading(true);
+
+        const response = await getBeehives({
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        });
+
+        const userBeehives = response.data.filter(
+          (b) => b.producerId === userId
+        );
+
+        // Salvar cache offline
+        await AsyncStorage.setItem(`beehives_${userId}`, JSON.stringify(userBeehives));
+
+        setBeehives(userBeehives);
+      } catch (err) {
+        console.error("Erro ao carregar colmeias da API:", err);
+        console.warn("Tentando carregar colmeias do cache...");
+
+        try {
+          const cachedBeehives = await AsyncStorage.getItem(`beehives_${userId}`);
+          if (cachedBeehives) {
+            setBeehives(JSON.parse(cachedBeehives));
+          } else {
+            console.warn("Nenhuma colmeia salva no cache");
+          }
+        } catch (cacheError) {
+          console.error("Erro ao acessar cache de colmeias:", cacheError);
         }
-      } catch (cacheError) {
-        console.error("Erro ao acessar cache de colmeias:", cacheError);
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
     }
-  }
 
-  fetchBeehives();
-}, [userId, userToken]);
-
+    fetchBeehives();
+  }, [userId, userToken]);
 
   if (loading) {
     return (

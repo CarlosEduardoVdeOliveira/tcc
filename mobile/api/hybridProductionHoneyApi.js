@@ -1,16 +1,16 @@
 import { isOfflineMode } from "../utils/config.js";
 import {
-  offlineCreateProductionHoney,
-  offlineDeleteProductionHoney,
-  offlineGetProductionHoney,
-  offlineUpdateProductionHoney
-} from "./offlineApi.js";
-import {
   createProductionHoney,
   deleteProductionHoney,
   getProductionHoney,
   updateProductionHoney
 } from "./productionHoneyApi.js";
+import {
+  offlineCreateProductionHoney,
+  offlineDeleteProductionHoney,
+  offlineGetProductionHoney,
+  offlineUpdateProductionHoney
+} from "./offlineApi.js";
 
 // API híbrida para produção de mel
 export const hybridGetProductionHoney = async (beehiveId) => {

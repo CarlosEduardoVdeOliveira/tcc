@@ -58,7 +58,7 @@ export const hybridUpdateActivity = async (data, id) => {
   }
 };
 
-export const hybridDeleteActivity = async (id, beehiveId) => {
+export const hybridDeleteActivity = async (id) => {
   try {
     if (isOfflineMode()) {
       console.log("Modo offline: removendo atividade localmente");
