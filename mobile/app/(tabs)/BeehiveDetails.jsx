@@ -1,5 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   Alert,
@@ -7,19 +11,21 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 import { deleteActivity, getActivity } from "../../api/activityApi.js";
 import { deleteBeehive, getBeehive } from "../../api/beehiveApi.js";
-import { getDisease } from "../../api/diseaseApi.js";
-import { getFood } from "../../api/foodApi.js";
+import { deleteDisease, getDisease } from "../../api/diseaseApi.js";
+import { deleteFood, getFood } from "../../api/foodApi.js";
 import {
-  getProductionHoney
+  deleteProductionHoney,
+  getProductionHoney,
 } from "../../api/productionHoneyApi.js";
 import {
-  getTemperatureHumidity
+  deleteTemperatureHumidity,
+  getTemperatureHumidity,
 } from "../../api/temperatureHumidity.js";
 
 import Footer from "../../components/Footer.js";
@@ -89,35 +95,104 @@ function BeehiveDetails() {
           getTemperatureHumidity(id),
         ]);
 
+        // Salvar no AsyncStorage (somente após sucesso)
+        await AsyncStorage.setItem(
+          `beehive_${id}`,
+          JSON.stringify(beehiveData)
+        );
+        await AsyncStorage.setItem(
+          `activities_${id}`,
+          JSON.stringify(activitiesData)
+        );
+        await AsyncStorage.setItem(`foods_${id}`, JSON.stringify(foodsData));
+        await AsyncStorage.setItem(
+          `diseases_${id}`,
+          JSON.stringify(diseasesData)
+        );
+        await AsyncStorage.setItem(
+          `productionHoneys_${id}`,
+          JSON.stringify(productionHoneyData)
+        );
+        await AsyncStorage.setItem(
+          `temperatureHumidities_${id}`,
+          JSON.stringify(temperatureHumidityData)
+        );
+
         setBeehive(beehiveData);
-        
-        // Organizar todas as seções por data (mais recente primeiro)
-        const sortedActivities = Array.isArray(activitiesData) 
-          ? activitiesData.sort((a, b) => new Date(b.dateActivity) - new Date(a.dateActivity))
-          : [];
-        setActivities(sortedActivities);
-        
-        const sortedFoods = Array.isArray(foodsData) 
-          ? foodsData.sort((a, b) => new Date(b.dateFeeding) - new Date(a.dateFeeding))
-          : [];
-        setFoods(sortedFoods);
-        
-        const sortedDiseases = Array.isArray(diseasesData) 
-          ? diseasesData.sort((a, b) => new Date(b.dateDiagnosis) - new Date(a.dateDiagnosis))
-          : [];
-        setDiseases(sortedDiseases);
-        
-        const sortedProductionHoneys = Array.isArray(productionHoneyData) 
-          ? productionHoneyData.sort((a, b) => new Date(b.dateCollection) - new Date(a.dateCollection))
-          : [];
-        setProductionHoneys(sortedProductionHoneys);
-        
-        const sortedTemperatureHumidities = Array.isArray(temperatureHumidityData) 
-          ? temperatureHumidityData.sort((a, b) => new Date(b.dateMeasurement) - new Date(a.dateMeasurement))
-          : [];
-        setTemperatureHumidities(sortedTemperatureHumidities);
+
+        setActivities(
+          Array.isArray(activitiesData)
+            ? activitiesData.sort(
+                (a, b) => new Date(b.dateActivity) - new Date(a.dateActivity)
+              )
+            : []
+        );
+
+        setFoods(
+          Array.isArray(foodsData)
+            ? foodsData.sort(
+                (a, b) => new Date(b.dateFeeding) - new Date(a.dateFeeding)
+              )
+            : []
+        );
+
+        setDiseases(
+          Array.isArray(diseasesData)
+            ? diseasesData.sort(
+                (a, b) => new Date(b.dateDiagnosis) - new Date(a.dateDiagnosis)
+              )
+            : []
+        );
+
+        setProductionHoneys(
+          Array.isArray(productionHoneyData)
+            ? productionHoneyData.sort(
+                (a, b) =>
+                  new Date(b.dateCollection) - new Date(a.dateCollection)
+              )
+            : []
+        );
+
+        setTemperatureHumidities(
+          Array.isArray(temperatureHumidityData)
+            ? temperatureHumidityData.sort(
+                (a, b) =>
+                  new Date(b.dateMeasurement) - new Date(a.dateMeasurement)
+              )
+            : []
+        );
       } catch (error) {
         console.error("Erro ao carregar colmeia:", error);
+        console.warn("Tentando carregar dados do cache (modo offline)");
+
+        try {
+          const [
+            cachedBeehive,
+            cachedActivities,
+            cachedFoods,
+            cachedDiseases,
+            cachedProductionHoneys,
+            cachedTemperatureHumidities,
+          ] = await Promise.all([
+            AsyncStorage.getItem(`beehive_${id}`),
+            AsyncStorage.getItem(`activities_${id}`),
+            AsyncStorage.getItem(`foods_${id}`),
+            AsyncStorage.getItem(`diseases_${id}`),
+            AsyncStorage.getItem(`productionHoneys_${id}`),
+            AsyncStorage.getItem(`temperatureHumidities_${id}`),
+          ]);
+
+          setBeehive(JSON.parse(cachedBeehive));
+          setActivities(JSON.parse(cachedActivities) || []);
+          setFoods(JSON.parse(cachedFoods) || []);
+          setDiseases(JSON.parse(cachedDiseases) || []);
+          setProductionHoneys(JSON.parse(cachedProductionHoneys) || []);
+          setTemperatureHumidities(
+            JSON.parse(cachedTemperatureHumidities) || []
+          );
+        } catch (storageError) {
+          console.error("Erro ao carregar dados offline:", storageError);
+        }
       } finally {
         setLoading(false);
       }
@@ -131,7 +206,7 @@ function BeehiveDetails() {
     useCallback(() => {
       console.log("Tela focada, recarregando dados");
       reloadData();
-    }, [id])
+    }, [reloadData])
   );
 
   const handleDelete = async (itemId, deleteFunc) => {
@@ -213,7 +288,7 @@ function BeehiveDetails() {
   const handleOpenModal = (section) => {
     setOpenModal(section);
   };
-  
+
   const handleCloseModal = () => {
     console.log("Fechando modal e recarregando dados");
     setOpenModal(null);
@@ -238,10 +313,6 @@ function BeehiveDetails() {
     return Math.ceil(items.length / itemsPerPage);
   };
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-  };
-
   const handleActivitiesPageChange = (newPage) => {
     setActivitiesPage(newPage);
   };
@@ -262,11 +333,11 @@ function BeehiveDetails() {
     setMeasurementsPage(newPage);
   };
 
-  const reloadData = async () => {
+  const reloadData = useCallback(async () => {
     setLoading(true);
     try {
       console.log("Recarregando dados da colmeia:", id);
-      
+
       const [
         { data: beehiveData },
         { data: activitiesData },
@@ -283,61 +354,128 @@ function BeehiveDetails() {
         getTemperatureHumidity(id),
       ]);
 
-      console.log("Dados recebidos:", {
-        beehive: beehiveData,
-        activities: activitiesData,
-        foods: foodsData,
-        diseases: diseasesData,
-        productionHoney: productionHoneyData,
-        temperatureHumidity: temperatureHumidityData,
-      });
+      // Salvar dados em cache (somente após sucesso da API)
+      await AsyncStorage.setItem(`beehive_${id}`, JSON.stringify(beehiveData));
+      await AsyncStorage.setItem(
+        `activities_${id}`,
+        JSON.stringify(activitiesData)
+      );
+      await AsyncStorage.setItem(`foods_${id}`, JSON.stringify(foodsData));
+      await AsyncStorage.setItem(
+        `diseases_${id}`,
+        JSON.stringify(diseasesData)
+      );
+      await AsyncStorage.setItem(
+        `productionHoneys_${id}`,
+        JSON.stringify(productionHoneyData)
+      );
+      await AsyncStorage.setItem(
+        `temperatureHumidities_${id}`,
+        JSON.stringify(temperatureHumidityData)
+      );
 
+      // Setar no estado (ordenado)
       setBeehive(beehiveData);
-      
-      const sortedActivities = Array.isArray(activitiesData) 
-        ? activitiesData.sort((a, b) => new Date(b.dateActivity) - new Date(a.dateActivity))
-        : [];
-      setActivities(sortedActivities);
-      
-      const sortedFoods = Array.isArray(foodsData) 
-        ? foodsData.sort((a, b) => new Date(b.dateFeeding) - new Date(a.dateFeeding))
-        : [];
-      setFoods(sortedFoods);
-      
-      const sortedDiseases = Array.isArray(diseasesData) 
-        ? diseasesData.sort((a, b) => new Date(b.dateDiagnosis) - new Date(a.dateDiagnosis))
-        : [];
-      setDiseases(sortedDiseases);
-      
-      const sortedProductionHoneys = Array.isArray(productionHoneyData) 
-        ? productionHoneyData.sort((a, b) => new Date(b.dateCollection) - new Date(a.dateCollection))
-        : [];
-      setProductionHoneys(sortedProductionHoneys);
-      
-      const sortedTemperatureHumidities = Array.isArray(temperatureHumidityData) 
-        ? temperatureHumidityData.sort((a, b) => new Date(b.dateMeasurement) - new Date(a.dateMeasurement))
-        : [];
-      setTemperatureHumidities(sortedTemperatureHumidities);
-      
-      console.log("Dados processados e ordenados com sucesso");
+
+      setActivities(
+        Array.isArray(activitiesData)
+          ? activitiesData.sort(
+              (a, b) => new Date(b.dateActivity) - new Date(a.dateActivity)
+            )
+          : []
+      );
+
+      setFoods(
+        Array.isArray(foodsData)
+          ? foodsData.sort(
+              (a, b) => new Date(b.dateFeeding) - new Date(a.dateFeeding)
+            )
+          : []
+      );
+
+      setDiseases(
+        Array.isArray(diseasesData)
+          ? diseasesData.sort(
+              (a, b) => new Date(b.dateDiagnosis) - new Date(a.dateDiagnosis)
+            )
+          : []
+      );
+
+      setProductionHoneys(
+        Array.isArray(productionHoneyData)
+          ? productionHoneyData.sort(
+              (a, b) => new Date(b.dateCollection) - new Date(a.dateCollection)
+            )
+          : []
+      );
+
+      setTemperatureHumidities(
+        Array.isArray(temperatureHumidityData)
+          ? temperatureHumidityData.sort(
+              (a, b) =>
+                new Date(b.dateMeasurement) - new Date(a.dateMeasurement)
+            )
+          : []
+      );
+
+      console.log("Dados processados e armazenados com sucesso");
     } catch (error) {
       console.error("Erro ao recarregar dados:", error);
-      console.error("Detalhes do erro:", error.response?.data || error.message);
+      console.warn("Tentando carregar dados do cache (modo offline)");
+
+      try {
+        const [
+          cachedBeehive,
+          cachedActivities,
+          cachedFoods,
+          cachedDiseases,
+          cachedProductionHoneys,
+          cachedTemperatureHumidities,
+        ] = await Promise.all([
+          AsyncStorage.getItem(`beehive_${id}`),
+          AsyncStorage.getItem(`activities_${id}`),
+          AsyncStorage.getItem(`foods_${id}`),
+          AsyncStorage.getItem(`diseases_${id}`),
+          AsyncStorage.getItem(`productionHoneys_${id}`),
+          AsyncStorage.getItem(`temperatureHumidities_${id}`),
+        ]);
+
+        setBeehive(JSON.parse(cachedBeehive));
+        setActivities(JSON.parse(cachedActivities) || []);
+        setFoods(JSON.parse(cachedFoods) || []);
+        setDiseases(JSON.parse(cachedDiseases) || []);
+        setProductionHoneys(JSON.parse(cachedProductionHoneys) || []);
+        setTemperatureHumidities(JSON.parse(cachedTemperatureHumidities) || []);
+      } catch (storageError) {
+        console.error("Erro ao carregar dados offline:", storageError);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'ativo':
-      case 'active':
-        return { backgroundColor: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' };
-      case 'inativo':
-      case 'inactive':
-        return { backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fecaca' };
+      case "ativo":
+      case "active":
+        return {
+          backgroundColor: "#dcfce7",
+          color: "#166534",
+          borderColor: "#bbf7d0",
+        };
+      case "inativo":
+      case "inactive":
+        return {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          borderColor: "#fecaca",
+        };
       default:
-        return { backgroundColor: '#f3f4f6', color: '#374151', borderColor: '#d1d5db' };
+        return {
+          backgroundColor: "#f3f4f6",
+          color: "#374151",
+          borderColor: "#d1d5db",
+        };
     }
   };
 
@@ -348,7 +486,7 @@ function BeehiveDetails() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
+        <Header pathName="Beehives" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando colmeia...</Text>
         </View>
@@ -359,7 +497,7 @@ function BeehiveDetails() {
   if (!beehive) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
+        <Header pathName="Beehives" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Colmeia não encontrada.</Text>
         </View>
@@ -371,9 +509,9 @@ function BeehiveDetails() {
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" title="Detalhes da Colmeia" />
-      
-      <ScrollView 
+      <Header pathName="Beehives" title="Detalhes da Colmeia" />
+
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -383,29 +521,41 @@ function BeehiveDetails() {
             <Text style={styles.beehiveName}>{beehive.name}</Text>
             <Text style={styles.beehiveType}>{beehive.typeBeehive}</Text>
           </View>
-          
+
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Data de Início</Text>
               <Text style={styles.infoValue}>
-                {beehive.startDate ? formatDate(beehive.startDate) : "Não informado"}
+                {beehive.startDate
+                  ? formatDate(beehive.startDate)
+                  : "Não informado"}
               </Text>
             </View>
-            
+
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Status</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor, borderColor: statusStyle.borderColor }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: statusStyle.backgroundColor,
+                    borderColor: statusStyle.borderColor,
+                  },
+                ]}
+              >
                 <Text style={[styles.statusText, { color: statusStyle.color }]}>
                   {beehive.status}
                 </Text>
               </View>
             </View>
           </View>
-          
+
           {beehive.observations && (
             <View style={styles.observationsContainer}>
               <Text style={styles.infoLabel}>Observações</Text>
-              <Text style={styles.observationsText}>{beehive.observations}</Text>
+              <Text style={styles.observationsText}>
+                {beehive.observations}
+              </Text>
             </View>
           )}
         </View>
@@ -413,8 +563,8 @@ function BeehiveDetails() {
         {/* Localização */}
         <View style={styles.mapCard}>
           <Text style={styles.sectionTitle}>Localização da Colmeia</Text>
-          <Map 
-            latitude={beehive.latitude} 
+          <Map
+            latitude={beehive.latitude}
             longitude={beehive.longitude}
             style={styles.map}
           />
@@ -424,7 +574,9 @@ function BeehiveDetails() {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => navigation.navigate("UpdateBeehive", { id })}
+            onPress={() =>
+              navigation.navigate("(tabs)", { screen: "UpdateBeehive" }, { id })
+            }
           >
             <Icon name="pencil" size={16} color="#fff" />
             <Text style={styles.editButtonText}>Editar</Text>
@@ -459,75 +611,110 @@ function BeehiveDetails() {
               <Text style={styles.addButtonText}>Adicionar Atividade</Text>
             </TouchableOpacity>
           </View>
-          
+
           {activities.length > 0 ? (
             <>
-              {getPaginatedItems(activities, activitiesPage).map((activity, index) => (
-                <View key={activity.id || index} style={styles.itemCard}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemDate}>{formatDate(activity.dateActivity)}</Text>
-                    <Text style={styles.itemType}>{activity.typeActivity}</Text>
+              {getPaginatedItems(activities, activitiesPage).map(
+                (activity, index) => (
+                  <View key={activity.id || index} style={styles.itemCard}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemDate}>
+                        {formatDate(activity.dateActivity)}
+                      </Text>
+                      <Text style={styles.itemType}>
+                        {activity.typeActivity}
+                      </Text>
+                    </View>
+                    <Text style={styles.itemDescription}>
+                      {activity.descriptions}
+                    </Text>
+                    {activity.observations && (
+                      <Text style={styles.itemObservations}>
+                        {activity.observations}
+                      </Text>
+                    )}
+
+                    {/* Botões de ação */}
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() =>
+                          handleEdit(activity.id, "Atividade", activity)
+                        }
+                      >
+                        <Icon name="pencil" size={16} color="#22c55e" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => {
+                          Alert.alert(
+                            "Excluir Atividade",
+                            "Tem certeza que deseja excluir esta atividade?",
+                            [
+                              { text: "Cancelar", style: "cancel" },
+                              {
+                                text: "Excluir",
+                                style: "destructive",
+                                onPress: () =>
+                                  handleDeleteActivity(activity.id),
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        <Icon name="trash" size={16} color="#dc2626" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.itemDescription}>{activity.descriptions}</Text>
-                  {activity.observations && (
-                    <Text style={styles.itemObservations}>{activity.observations}</Text>
-                  )}
-                  
-                  {/* Botões de ação */}
-                  <View style={styles.itemActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleEdit(activity.id, "Atividade", activity)}
-                    >
-                      <Icon name="pencil" size={16} color="#22c55e" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => {
-                        Alert.alert(
-                          "Excluir Atividade",
-                          "Tem certeza que deseja excluir esta atividade?",
-                          [
-                            { text: "Cancelar", style: "cancel" },
-                            {
-                              text: "Excluir",
-                              style: "destructive",
-                              onPress: () => handleDeleteActivity(activity.id),
-                            },
-                          ]
-                        );
-                      }}
-                    >
-                      <Icon name="trash" size={16} color="#dc2626" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-              
+                )
+              )}
+
               {/* Controles de paginação */}
               {getTotalPages(activities) > 1 && (
                 <View style={styles.paginationContainer}>
                   <TouchableOpacity
-                    style={[styles.paginationButton, activitiesPage === 1 && styles.paginationButtonDisabled]}
-                    onPress={() => handleActivitiesPageChange(activitiesPage - 1)}
+                    style={[
+                      styles.paginationButton,
+                      activitiesPage === 1 && styles.paginationButtonDisabled,
+                    ]}
+                    onPress={() =>
+                      handleActivitiesPageChange(activitiesPage - 1)
+                    }
                     disabled={activitiesPage === 1}
                   >
-                    <Text style={[styles.paginationText, activitiesPage === 1 && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        activitiesPage === 1 && styles.paginationTextDisabled,
+                      ]}
+                    >
                       Anterior
                     </Text>
                   </TouchableOpacity>
-                  
+
                   <Text style={styles.paginationInfo}>
                     Página {activitiesPage} de {getTotalPages(activities)}
                   </Text>
-                  
+
                   <TouchableOpacity
-                    style={[styles.paginationButton, activitiesPage === getTotalPages(activities) && styles.paginationButtonDisabled]}
-                    onPress={() => handleActivitiesPageChange(activitiesPage + 1)}
+                    style={[
+                      styles.paginationButton,
+                      activitiesPage === getTotalPages(activities) &&
+                        styles.paginationButtonDisabled,
+                    ]}
+                    onPress={() =>
+                      handleActivitiesPageChange(activitiesPage + 1)
+                    }
                     disabled={activitiesPage === getTotalPages(activities)}
                   >
-                    <Text style={[styles.paginationText, activitiesPage === getTotalPages(activities) && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        activitiesPage === getTotalPages(activities) &&
+                          styles.paginationTextDisabled,
+                      ]}
+                    >
                       Próxima
                     </Text>
                   </TouchableOpacity>
@@ -551,20 +738,26 @@ function BeehiveDetails() {
               <Text style={styles.addButtonText}>Adicionar Alimento</Text>
             </TouchableOpacity>
           </View>
-          
+
           {foods.length > 0 ? (
             <>
               {getPaginatedItems(foods, foodsPage).map((food, index) => (
                 <View key={food.id || index} style={styles.itemCard}>
                   <View style={styles.itemHeader}>
-                    <Text style={styles.itemDate}>{formatDate(food.dateFeeding)}</Text>
+                    <Text style={styles.itemDate}>
+                      {formatDate(food.dateFeeding)}
+                    </Text>
                     <Text style={styles.itemType}>{food.typeFood}</Text>
                   </View>
-                  <Text style={styles.itemDescription}>Quantidade: {food.amount}</Text>
+                  <Text style={styles.itemDescription}>
+                    Quantidade: {food.amount}
+                  </Text>
                   {food.observations && (
-                    <Text style={styles.itemObservations}>{food.observations}</Text>
+                    <Text style={styles.itemObservations}>
+                      {food.observations}
+                    </Text>
                   )}
-                  
+
                   {/* Botões de ação */}
                   <View style={styles.itemActions}>
                     <TouchableOpacity
@@ -573,7 +766,7 @@ function BeehiveDetails() {
                     >
                       <Icon name="pencil" size={16} color="#22c55e" />
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => {
@@ -596,30 +789,48 @@ function BeehiveDetails() {
                   </View>
                 </View>
               ))}
-              
+
               {/* Controles de paginação */}
               {getTotalPages(foods) > 1 && (
                 <View style={styles.paginationContainer}>
                   <TouchableOpacity
-                    style={[styles.paginationButton, foodsPage === 1 && styles.paginationButtonDisabled]}
+                    style={[
+                      styles.paginationButton,
+                      foodsPage === 1 && styles.paginationButtonDisabled,
+                    ]}
                     onPress={() => handleFoodsPageChange(foodsPage - 1)}
                     disabled={foodsPage === 1}
                   >
-                    <Text style={[styles.paginationText, foodsPage === 1 && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        foodsPage === 1 && styles.paginationTextDisabled,
+                      ]}
+                    >
                       Anterior
                     </Text>
                   </TouchableOpacity>
-                  
+
                   <Text style={styles.paginationInfo}>
                     Página {foodsPage} de {getTotalPages(foods)}
                   </Text>
-                  
+
                   <TouchableOpacity
-                    style={[styles.paginationButton, foodsPage === getTotalPages(foods) && styles.paginationButtonDisabled]}
+                    style={[
+                      styles.paginationButton,
+                      foodsPage === getTotalPages(foods) &&
+                        styles.paginationButtonDisabled,
+                    ]}
                     onPress={() => handleFoodsPageChange(foodsPage + 1)}
                     disabled={foodsPage === getTotalPages(foods)}
                   >
-                    <Text style={[styles.paginationText, foodsPage === getTotalPages(foods) && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        foodsPage === getTotalPages(foods) &&
+                          styles.paginationTextDisabled,
+                      ]}
+                    >
                       Próxima
                     </Text>
                   </TouchableOpacity>
@@ -643,75 +854,105 @@ function BeehiveDetails() {
               <Text style={styles.addButtonText}>Adicionar Doença/Praga</Text>
             </TouchableOpacity>
           </View>
-          
+
           {diseases.length > 0 ? (
             <>
-              {getPaginatedItems(diseases, diseasesPage).map((disease, index) => (
-                <View key={disease.id || index} style={styles.itemCard}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemDate}>{formatDate(disease.dateDiagnosis)}</Text>
-                    <Text style={styles.itemType}>{disease.diseasePrague}</Text>
+              {getPaginatedItems(diseases, diseasesPage).map(
+                (disease, index) => (
+                  <View key={disease.id || index} style={styles.itemCard}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemDate}>
+                        {formatDate(disease.dateDiagnosis)}
+                      </Text>
+                      <Text style={styles.itemType}>
+                        {disease.diseasePrague}
+                      </Text>
+                    </View>
+                    <Text style={styles.itemDescription}>
+                      Tratamento: {disease.treatment}
+                    </Text>
+                    {disease.observations && (
+                      <Text style={styles.itemObservations}>
+                        {disease.observations}
+                      </Text>
+                    )}
+
+                    {/* Botões de ação */}
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() =>
+                          handleEdit(disease.id, "Doenças/Pragas", disease)
+                        }
+                      >
+                        <Icon name="pencil" size={16} color="#22c55e" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => {
+                          Alert.alert(
+                            "Excluir Doença/Praga",
+                            "Tem certeza que deseja excluir esta doença/praga?",
+                            [
+                              { text: "Cancelar", style: "cancel" },
+                              {
+                                text: "Excluir",
+                                style: "destructive",
+                                onPress: () => handleDeleteDisease(disease.id),
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        <Icon name="trash" size={16} color="#dc2626" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.itemDescription}>Tratamento: {disease.treatment}</Text>
-                  {disease.observations && (
-                    <Text style={styles.itemObservations}>{disease.observations}</Text>
-                  )}
-                  
-                  {/* Botões de ação */}
-                  <View style={styles.itemActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleEdit(disease.id, "Doenças/Pragas", disease)}
-                    >
-                      <Icon name="pencil" size={16} color="#22c55e" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => {
-                        Alert.alert(
-                          "Excluir Doença/Praga",
-                          "Tem certeza que deseja excluir esta doença/praga?",
-                          [
-                            { text: "Cancelar", style: "cancel" },
-                            {
-                              text: "Excluir",
-                              style: "destructive",
-                              onPress: () => handleDeleteDisease(disease.id),
-                            },
-                          ]
-                        );
-                      }}
-                    >
-                      <Icon name="trash" size={16} color="#dc2626" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-              
+                )
+              )}
+
               {/* Controles de paginação */}
               {getTotalPages(diseases) > 1 && (
                 <View style={styles.paginationContainer}>
                   <TouchableOpacity
-                    style={[styles.paginationButton, diseasesPage === 1 && styles.paginationButtonDisabled]}
+                    style={[
+                      styles.paginationButton,
+                      diseasesPage === 1 && styles.paginationButtonDisabled,
+                    ]}
                     onPress={() => handleDiseasesPageChange(diseasesPage - 1)}
                     disabled={diseasesPage === 1}
                   >
-                    <Text style={[styles.paginationText, diseasesPage === 1 && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        diseasesPage === 1 && styles.paginationTextDisabled,
+                      ]}
+                    >
                       Anterior
                     </Text>
                   </TouchableOpacity>
-                  
+
                   <Text style={styles.paginationInfo}>
                     Página {diseasesPage} de {getTotalPages(diseases)}
                   </Text>
-                  
+
                   <TouchableOpacity
-                    style={[styles.paginationButton, diseasesPage === getTotalPages(diseases) && styles.paginationButtonDisabled]}
+                    style={[
+                      styles.paginationButton,
+                      diseasesPage === getTotalPages(diseases) &&
+                        styles.paginationButtonDisabled,
+                    ]}
                     onPress={() => handleDiseasesPageChange(diseasesPage + 1)}
                     disabled={diseasesPage === getTotalPages(diseases)}
                   >
-                    <Text style={[styles.paginationText, diseasesPage === getTotalPages(diseases) && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        diseasesPage === getTotalPages(diseases) &&
+                          styles.paginationTextDisabled,
+                      ]}
+                    >
                       Próxima
                     </Text>
                   </TouchableOpacity>
@@ -719,7 +960,9 @@ function BeehiveDetails() {
               )}
             </>
           ) : (
-            <Text style={styles.emptyText}>Nenhuma doença/praga encontrada.</Text>
+            <Text style={styles.emptyText}>
+              Nenhuma doença/praga encontrada.
+            </Text>
           )}
         </View>
 
@@ -735,75 +978,105 @@ function BeehiveDetails() {
               <Text style={styles.addButtonText}>Adicionar Produto</Text>
             </TouchableOpacity>
           </View>
-          
+
           {productionHoneys.length > 0 ? (
             <>
-              {getPaginatedItems(productionHoneys, productsPage).map((product, index) => (
-                <View key={product.id || index} style={styles.itemCard}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemDate}>{formatDate(product.dateCollection)}</Text>
-                    <Text style={styles.itemType}>{formatQuality(product.quality)}</Text>
+              {getPaginatedItems(productionHoneys, productsPage).map(
+                (product, index) => (
+                  <View key={product.id || index} style={styles.itemCard}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemDate}>
+                        {formatDate(product.dateCollection)}
+                      </Text>
+                      <Text style={styles.itemType}>
+                        {formatQuality(product.quality)}
+                      </Text>
+                    </View>
+                    <Text style={styles.itemDescription}>
+                      Quantidade: {product.amount}
+                    </Text>
+                    {product.observations && (
+                      <Text style={styles.itemObservations}>
+                        {product.observations}
+                      </Text>
+                    )}
+
+                    {/* Botões de ação */}
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() =>
+                          handleEdit(product.id, "Produtos", product)
+                        }
+                      >
+                        <Icon name="pencil" size={16} color="#22c55e" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => {
+                          Alert.alert(
+                            "Excluir Produto",
+                            "Tem certeza que deseja excluir este produto?",
+                            [
+                              { text: "Cancelar", style: "cancel" },
+                              {
+                                text: "Excluir",
+                                style: "destructive",
+                                onPress: () => handleDeleteProduct(product.id),
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        <Icon name="trash" size={16} color="#dc2626" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.itemDescription}>Quantidade: {product.amount}</Text>
-                  {product.observations && (
-                    <Text style={styles.itemObservations}>{product.observations}</Text>
-                  )}
-                  
-                  {/* Botões de ação */}
-                  <View style={styles.itemActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleEdit(product.id, "Produtos", product)}
-                    >
-                      <Icon name="pencil" size={16} color="#22c55e" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => {
-                        Alert.alert(
-                          "Excluir Produto",
-                          "Tem certeza que deseja excluir este produto?",
-                          [
-                            { text: "Cancelar", style: "cancel" },
-                            {
-                              text: "Excluir",
-                              style: "destructive",
-                              onPress: () => handleDeleteProduct(product.id),
-                            },
-                          ]
-                        );
-                      }}
-                    >
-                      <Icon name="trash" size={16} color="#dc2626" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-              
+                )
+              )}
+
               {/* Controles de paginação */}
               {getTotalPages(productionHoneys) > 1 && (
                 <View style={styles.paginationContainer}>
                   <TouchableOpacity
-                    style={[styles.paginationButton, productsPage === 1 && styles.paginationButtonDisabled]}
+                    style={[
+                      styles.paginationButton,
+                      productsPage === 1 && styles.paginationButtonDisabled,
+                    ]}
                     onPress={() => handleProductsPageChange(productsPage - 1)}
                     disabled={productsPage === 1}
                   >
-                    <Text style={[styles.paginationText, productsPage === 1 && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        productsPage === 1 && styles.paginationTextDisabled,
+                      ]}
+                    >
                       Anterior
                     </Text>
                   </TouchableOpacity>
-                  
+
                   <Text style={styles.paginationInfo}>
                     Página {productsPage} de {getTotalPages(productionHoneys)}
                   </Text>
-                  
+
                   <TouchableOpacity
-                    style={[styles.paginationButton, productsPage === getTotalPages(productionHoneys) && styles.paginationButtonDisabled]}
+                    style={[
+                      styles.paginationButton,
+                      productsPage === getTotalPages(productionHoneys) &&
+                        styles.paginationButtonDisabled,
+                    ]}
                     onPress={() => handleProductsPageChange(productsPage + 1)}
                     disabled={productsPage === getTotalPages(productionHoneys)}
                   >
-                    <Text style={[styles.paginationText, productsPage === getTotalPages(productionHoneys) && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        productsPage === getTotalPages(productionHoneys) &&
+                          styles.paginationTextDisabled,
+                      ]}
+                    >
                       Próxima
                     </Text>
                   </TouchableOpacity>
@@ -827,77 +1100,123 @@ function BeehiveDetails() {
               <Text style={styles.addButtonText}>Adicionar Medição</Text>
             </TouchableOpacity>
           </View>
-          
+
           {temperatureHumidities.length > 0 ? (
             <>
-              {getPaginatedItems(temperatureHumidities, measurementsPage).map((measurement, index) => (
-                <View key={measurement.id || index} style={styles.itemCard}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemDate}>{formatDate(measurement.dateMeasurement)}</Text>
-                    <Text style={styles.itemType}>Medição</Text>
+              {getPaginatedItems(temperatureHumidities, measurementsPage).map(
+                (measurement, index) => (
+                  <View key={measurement.id || index} style={styles.itemCard}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemDate}>
+                        {formatDate(measurement.dateMeasurement)}
+                      </Text>
+                      <Text style={styles.itemType}>Medição</Text>
+                    </View>
+                    <View style={styles.measurementGrid}>
+                      <Text style={styles.measurementItem}>
+                        Temp. Interna: {measurement.internalTemperature}°C
+                      </Text>
+                      <Text style={styles.measurementItem}>
+                        Umidade Interna: {measurement.humidityInternal}%
+                      </Text>
+                      <Text style={styles.measurementItem}>
+                        Temp. Externa: {measurement.externalTemperature}°C
+                      </Text>
+                      <Text style={styles.measurementItem}>
+                        Umidade Externa: {measurement.humidityExternal}%
+                      </Text>
+                    </View>
+
+                    {/* Botões de ação */}
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() =>
+                          handleEdit(
+                            measurement.id,
+                            "Temperatura e Umidade",
+                            measurement
+                          )
+                        }
+                      >
+                        <Icon name="pencil" size={16} color="#22c55e" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => {
+                          Alert.alert(
+                            "Excluir Medição",
+                            "Tem certeza que deseja excluir esta medição?",
+                            [
+                              { text: "Cancelar", style: "cancel" },
+                              {
+                                text: "Excluir",
+                                style: "destructive",
+                                onPress: () =>
+                                  handleDeleteMeasurement(measurement.id),
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        <Icon name="trash" size={16} color="#dc2626" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={styles.measurementGrid}>
-                    <Text style={styles.measurementItem}>Temp. Interna: {measurement.internalTemperature}°C</Text>
-                    <Text style={styles.measurementItem}>Umidade Interna: {measurement.humidityInternal}%</Text>
-                    <Text style={styles.measurementItem}>Temp. Externa: {measurement.externalTemperature}°C</Text>
-                    <Text style={styles.measurementItem}>Umidade Externa: {measurement.humidityExternal}%</Text>
-                  </View>
-                  
-                  {/* Botões de ação */}
-                  <View style={styles.itemActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleEdit(measurement.id, "Temperatura e Umidade", measurement)}
-                    >
-                      <Icon name="pencil" size={16} color="#22c55e" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => {
-                        Alert.alert(
-                          "Excluir Medição",
-                          "Tem certeza que deseja excluir esta medição?",
-                          [
-                            { text: "Cancelar", style: "cancel" },
-                            {
-                              text: "Excluir",
-                              style: "destructive",
-                              onPress: () => handleDeleteMeasurement(measurement.id),
-                            },
-                          ]
-                        );
-                      }}
-                    >
-                      <Icon name="trash" size={16} color="#dc2626" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-              
+                )
+              )}
+
               {/* Controles de paginação */}
               {getTotalPages(temperatureHumidities) > 1 && (
                 <View style={styles.paginationContainer}>
                   <TouchableOpacity
-                    style={[styles.paginationButton, measurementsPage === 1 && styles.paginationButtonDisabled]}
-                    onPress={() => handleMeasurementsPageChange(measurementsPage - 1)}
+                    style={[
+                      styles.paginationButton,
+                      measurementsPage === 1 && styles.paginationButtonDisabled,
+                    ]}
+                    onPress={() =>
+                      handleMeasurementsPageChange(measurementsPage - 1)
+                    }
                     disabled={measurementsPage === 1}
                   >
-                    <Text style={[styles.paginationText, measurementsPage === 1 && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        measurementsPage === 1 && styles.paginationTextDisabled,
+                      ]}
+                    >
                       Anterior
                     </Text>
                   </TouchableOpacity>
-                  
+
                   <Text style={styles.paginationInfo}>
-                    Página {measurementsPage} de {getTotalPages(temperatureHumidities)}
+                    Página {measurementsPage} de{" "}
+                    {getTotalPages(temperatureHumidities)}
                   </Text>
-                  
+
                   <TouchableOpacity
-                    style={[styles.paginationButton, measurementsPage === getTotalPages(temperatureHumidities) && styles.paginationButtonDisabled]}
-                    onPress={() => handleMeasurementsPageChange(measurementsPage + 1)}
-                    disabled={measurementsPage === getTotalPages(temperatureHumidities)}
+                    style={[
+                      styles.paginationButton,
+                      measurementsPage ===
+                        getTotalPages(temperatureHumidities) &&
+                        styles.paginationButtonDisabled,
+                    ]}
+                    onPress={() =>
+                      handleMeasurementsPageChange(measurementsPage + 1)
+                    }
+                    disabled={
+                      measurementsPage === getTotalPages(temperatureHumidities)
+                    }
                   >
-                    <Text style={[styles.paginationText, measurementsPage === getTotalPages(temperatureHumidities) && styles.paginationTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.paginationText,
+                        measurementsPage ===
+                          getTotalPages(temperatureHumidities) &&
+                          styles.paginationTextDisabled,
+                      ]}
+                    >
                       Próxima
                     </Text>
                   </TouchableOpacity>
@@ -912,19 +1231,49 @@ function BeehiveDetails() {
 
       {/* Modal para formulários */}
       {openModal && (
-        <Modal 
-          visible={true} 
-          onClose={handleCloseModal} 
-          title={`${editingItem ? 'Editar' : 'Adicionar'} ${openModal}`}
+        <Modal
+          visible={true}
+          onClose={handleCloseModal}
+          title={`${editingItem ? "Editar" : "Adicionar"} ${openModal}`}
         >
-          {openModal === "Atividade" && <FormActivity beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
-          {openModal === "Alimentos" && <FormFood beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
-          {openModal === "Doenças/Pragas" && <FormDisease beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
-          {openModal === "Produtos" && <FormProductionHoney beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
-          {openModal === "Temperatura e Umidade" && <FormTemperatureHumidity beehiveId={id} onSuccess={handleCloseModal} editingItem={editingItem} />}
+          {openModal === "Atividade" && (
+            <FormActivity
+              beehiveId={id}
+              onSuccess={handleCloseModal}
+              editingItem={editingItem}
+            />
+          )}
+          {openModal === "Alimentos" && (
+            <FormFood
+              beehiveId={id}
+              onSuccess={handleCloseModal}
+              editingItem={editingItem}
+            />
+          )}
+          {openModal === "Doenças/Pragas" && (
+            <FormDisease
+              beehiveId={id}
+              onSuccess={handleCloseModal}
+              editingItem={editingItem}
+            />
+          )}
+          {openModal === "Produtos" && (
+            <FormProductionHoney
+              beehiveId={id}
+              onSuccess={handleCloseModal}
+              editingItem={editingItem}
+            />
+          )}
+          {openModal === "Temperatura e Umidade" && (
+            <FormTemperatureHumidity
+              beehiveId={id}
+              onSuccess={handleCloseModal}
+              editingItem={editingItem}
+            />
+          )}
         </Modal>
       )}
-      
+
       <Footer />
     </View>
   );
@@ -1179,4 +1528,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BeehiveDetails; 
+export default BeehiveDetails;

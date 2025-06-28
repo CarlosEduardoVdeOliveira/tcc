@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { useNavigation } from "@react-navigation/native";
 import { Eye, EyeOff } from "lucide-react-native";
-import { useContext, useState } from "react";
+import { useContext, useLayoutEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,56 +12,40 @@ import {
   View,
 } from "react-native";
 import Button from "../components/Button.js";
+import Footer from "../components/Footer.js";
 import { AuthContext } from "../contexts/auth.js";
 
-export default function Login() {
+function Login() {
   const [viewPassword, setViewPassword] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const { signin } = useContext(AuthContext);
-  const router = useRouter();
+  const navigation = useNavigation();
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos");
-      return;
-    }
-
-    setLoading(true);
-    console.log("🔐 Iniciando login...");
-    console.log("📧 Email:", email);
-    console.log("🔑 Senha:", password);
-
-    try {
-      const result = await signin(email, password);
-      console.log("📱 Resultado do login:", result);
-      
-      if (result.success) {
-        console.log("✅ Login bem-sucedido, redirecionando...");
-        router.replace('/(tabs)/Beehives');
-      } else {
-        console.log("❌ Login falhou:", result.message);
-        Alert.alert("Erro", result.message);
-      }
-    } catch (error) {
-      console.error("💥 Erro inesperado:", error);
-      Alert.alert("Erro", "Erro inesperado. Tente novamente.");
-    } finally {
-      setLoading(false);
+    const result = await signin(email, password);
+    if (result.success) {
+      navigation.navigate("(tabs)", { screen: "Beehives" }); // ajuste conforme a sua rota
+    } else {
+      Alert.alert("Erro", result.message);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, width: "100%" }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.content}>
+        <View style={{ flex: 1, justifyContent: "center", width: "100%" }}>
           <Text style={styles.title}>Boas-vindas!</Text>
-          <Text style={styles.subtitle}>A sua plataforma de gerenciamento das suas colmeias.</Text>
+          <Text style={styles.subtitle}>
+            A sua plataforma de gerenciamento das suas colmeias.
+          </Text>
           <View style={styles.formBox}>
             <Text style={styles.formTitle}>Já tem conta? Faça seu login:</Text>
 
@@ -86,8 +70,14 @@ export default function Login() {
                 onChangeText={setPassword}
                 placeholderTextColor="#bdbdbd"
               />
-              <TouchableOpacity onPress={() => setViewPassword((prev) => !prev)}>
-                {viewPassword ? <EyeOff size={22} color="#bdbdbd" /> : <Eye size={22} color="#bdbdbd" />}
+              <TouchableOpacity
+                onPress={() => setViewPassword((prev) => !prev)}
+              >
+                {viewPassword ? (
+                  <EyeOff size={22} color="#bdbdbd" />
+                ) : (
+                  <Eye size={22} color="#bdbdbd" />
+                )}
               </TouchableOpacity>
             </View>
 
@@ -95,20 +85,24 @@ export default function Login() {
               onPress={handleLogin}
               style={styles.button}
               textStyle={styles.buttonText}
-              disabled={loading}
             >
-              <Text>{loading ? "Entrando..." : "Entrar"}</Text>
+              <Text>Entrar</Text>
             </Button>
-
-            <TouchableOpacity
-              style={{ marginTop: 18 }}
-              onPress={() => router.push('/CreateAccount')}
-            >
-              <Text style={styles.link}>Ainda não tem conta? Cadastre-se</Text>
-            </TouchableOpacity>
+            <View style={styles.createLinkContainer}>
+              <Text style={styles.createLink}>
+                Ainda não tem conta?{" "}
+                <Text
+                  style={styles.createLinkBold}
+                  onPress={() => navigation.navigate("CreateAccount")}
+                >
+                  Cadastrar-se
+                </Text>
+              </Text>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
+      <Footer />
     </View>
   );
 }
@@ -117,11 +111,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     padding: 24,
   },
   title: {
@@ -148,6 +137,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+    alignSelf: "center",
   },
   formTitle: {
     fontSize: 18,
@@ -196,11 +186,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
-  link: {
-    color: "#eead2d",
-    fontWeight: "bold",
-    textAlign: "center",
-    textDecorationLine: "underline",
-    fontSize: 15,
+  createLinkContainer: {
+    alignItems: "center",
+    marginTop: 16,
   },
-}); 
+  createLink: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+  },
+  createLinkBold: {
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+    color: "#eead2d",
+  },
+});
+export default Login;

@@ -1,19 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import NetInfo from "@react-native-community/netinfo";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-    Alert,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { z } from "zod";
 import { getBeehive, updateBeehive } from "../../api/beehiveApi.js";
@@ -80,25 +81,49 @@ function UpdateBeehive() {
     async function fetchBeehive() {
       try {
         const userToken = await AsyncStorage.getItem("user_token");
-        const response = await getBeehive(id, {
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-          },
-        });
+        const isConnected = (await NetInfo.fetch()).isConnected;
 
-        const data = response.data;
-        setProducerId(data.producerId);
+        if (isConnected) {
+          const response = await getBeehive(id, {
+            headers: { Authorization: `Bearer ${userToken}` },
+          });
 
-        setValue("name", data.name);
-        setValue("typeBeehive", data.typeBeehive);
-        setValue("observations", data.observations || "");
-        setValue("startDate", data.startDate);
-        setValue("status", data.status);
-        setValue("latitude", data.latitude);
-        setValue("longitude", data.longitude);
+          const data = response.data;
+          await AsyncStorage.setItem(`beehive_${id}`, JSON.stringify(data));
 
-        if (data.startDate) {
-          setSelectedDate(new Date(data.startDate));
+          setProducerId(data.producerId);
+          setValue("name", data.name);
+          setValue("typeBeehive", data.typeBeehive);
+          setValue("observations", data.observations || "");
+          setValue("startDate", data.startDate);
+          setValue("status", data.status);
+          setValue("latitude", data.latitude);
+          setValue("longitude", data.longitude);
+
+          if (data.startDate) {
+            setSelectedDate(new Date(data.startDate));
+          }
+        } else {
+          const localData = await AsyncStorage.getItem(`beehive_${id}`);
+          if (localData) {
+            const data = JSON.parse(localData);
+            setProducerId(data.producerId);
+            setValue("name", data.name);
+            setValue("typeBeehive", data.typeBeehive);
+            setValue("observations", data.observations || "");
+            setValue("startDate", data.startDate);
+            setValue("status", data.status);
+            setValue("latitude", data.latitude);
+            setValue("longitude", data.longitude);
+            if (data.startDate) {
+              setSelectedDate(new Date(data.startDate));
+            }
+          } else {
+            Alert.alert(
+              "Offline",
+              "Sem conexão e sem dados locais disponíveis."
+            );
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar colmeia:", error);
@@ -114,37 +139,50 @@ function UpdateBeehive() {
   const onSubmit = async (data) => {
     try {
       const token = await AsyncStorage.getItem("user_token");
-      await updateBeehive(
-        id,
-        { ...data, producerId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      Alert.alert("Sucesso", "Colmeia atualizada com sucesso!");
-      navigation.navigate("Beehives");
+      const isConnected = (await NetInfo.fetch()).isConnected;
+
+      if (isConnected) {
+        await updateBeehive(
+          id,
+          { ...data, producerId },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        Alert.alert("Sucesso", "Colmeia atualizada com sucesso!");
+        navigation.navigate("(tabs)", { screen: "Beehives" });
+      } else {
+        await AsyncStorage.setItem(
+          `pending_update_beehive_${id}`,
+          JSON.stringify({ ...data, producerId })
+        );
+        Alert.alert(
+          "Offline",
+          "Alteração salva localmente. Será sincronizada quando houver conexão."
+        );
+        navigation.navigate("(tabs)", { screen: "Beehives" });
+      }
     } catch (err) {
       console.error("Erro ao atualizar:", err);
       Alert.alert("Erro", "Não foi possível atualizar a colmeia.");
     }
   };
 
-  const handleDateChange = (event, selectedDate) => {
+  const handleDateChange = (_event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setSelectedDate(selectedDate);
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+      const formattedDate = selectedDate.toISOString().split("T")[0];
       setValue("startDate", formattedDate);
     }
   };
 
-  // Função para formatar data no formato brasileiro
   const formatDateToBrazilian = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   const getStatusColor = (status) => {
@@ -170,7 +208,7 @@ function UpdateBeehive() {
 
   return (
     <View style={styles.container}>
-      <Header title="Editar Colmeia" />
+      <Header pathName="Beehives" title="Editar Colmeia" />
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           {/* Nome */}
@@ -189,7 +227,9 @@ function UpdateBeehive() {
                 />
               )}
             />
-            {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+            {errors.name && (
+              <Text style={styles.error}>{errors.name.message}</Text>
+            )}
           </View>
 
           {/* Tipo de Colmeia */}
@@ -243,11 +283,19 @@ function UpdateBeehive() {
                 style={styles.selectInput}
                 onPress={() => setShowStatusModal(true)}
               >
-                <Text style={[
-                  styles.selectText,
-                  { color: watchedValues.status ? getStatusColor(watchedValues.status) : "#9CA3AF" }
-                ]}>
-                  {statusOptions.find(opt => opt.value === watchedValues.status)?.label || "Selecione o status"}
+                <Text
+                  style={[
+                    styles.selectText,
+                    {
+                      color: watchedValues.status
+                        ? getStatusColor(watchedValues.status)
+                        : "#9CA3AF",
+                    },
+                  ]}
+                >
+                  {statusOptions.find(
+                    (opt) => opt.value === watchedValues.status
+                  )?.label || "Selecione o status"}
                 </Text>
               </TouchableOpacity>
               {errors.status && (
@@ -262,11 +310,15 @@ function UpdateBeehive() {
                 style={styles.selectInput}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text style={[
-                  styles.selectText,
-                  { color: watchedValues.startDate ? "#374151" : "#9CA3AF" }
-                ]}>
-                  {watchedValues.startDate ? formatDateToBrazilian(watchedValues.startDate) : "Selecione a data"}
+                <Text
+                  style={[
+                    styles.selectText,
+                    { color: watchedValues.startDate ? "#374151" : "#9CA3AF" },
+                  ]}
+                >
+                  {watchedValues.startDate
+                    ? formatDateToBrazilian(watchedValues.startDate)
+                    : "Selecione a data"}
                 </Text>
               </TouchableOpacity>
               {errors.startDate && (
@@ -280,8 +332,14 @@ function UpdateBeehive() {
             <Text style={styles.label}>Localização</Text>
             <View style={styles.mapContainer}>
               <Map
-                latitude={watchedValues.latitude !== 0 ? watchedValues.latitude : -15.78}
-                longitude={watchedValues.longitude !== 0 ? watchedValues.longitude : -47.93}
+                latitude={
+                  watchedValues.latitude !== 0 ? watchedValues.latitude : -15.78
+                }
+                longitude={
+                  watchedValues.longitude !== 0
+                    ? watchedValues.longitude
+                    : -47.93
+                }
                 onSelectLocation={(coords) => {
                   setValue("latitude", coords[0]);
                   setValue("longitude", coords[1]);
@@ -291,10 +349,7 @@ function UpdateBeehive() {
           </View>
 
           {/* Botão */}
-          <Button
-            onPress={handleSubmit(onSubmit)}
-            style={styles.submitButton}
-          >
+          <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton}>
             <Text>Atualizar Colmeia</Text>
           </Button>
         </View>
@@ -318,10 +373,16 @@ function UpdateBeehive() {
                     setShowStatusModal(false);
                   }}
                 >
-                  <Text style={[
-                    styles.modalOptionText,
-                    { color: option.value ? getStatusColor(option.value) : "#374151" }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      {
+                        color: option.value
+                          ? getStatusColor(option.value)
+                          : "#374151",
+                      },
+                    ]}
+                  >
                     {option.label}
                   </Text>
                 </TouchableOpacity>

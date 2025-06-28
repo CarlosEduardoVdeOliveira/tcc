@@ -15,7 +15,9 @@ const getAllBeehives = async (req, res) => {
         producerId: producerId,
       },
     });
-
+    if (!beehives.length) {
+      return res.status(200).json([]);
+    }
     if (beehives.length === 0) {
       return res.status(404).json({ error: 'Nenhuma colmeia encontrada.' });
     }
@@ -89,7 +91,9 @@ const findAllBeehivePerStatus = async (req, res) => {
     });
 
     if (beehives.length === 0) {
-      return res.status(404).json({ error: 'Nenhuma colmeia encontrada com o status informado.' });
+      return res
+        .status(404)
+        .json({ error: 'Nenhuma colmeia encontrada com o status informado.' });
     }
 
     return res.status(200).json(beehives);

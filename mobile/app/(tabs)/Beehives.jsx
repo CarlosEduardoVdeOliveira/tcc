@@ -1,13 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useLayoutEffect, useState } from "react";
-import {
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { getBeehives } from "../../api/beehiveApi.js";
 import CardAdd from "../../components/CardAdd.js";
@@ -15,7 +9,7 @@ import CardBeehive from "../../components/CardBeehive.js";
 import Footer from "../../components/Footer.js";
 import Header from "../../components/Header.js";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 function Beehives() {
   const [beehives, setBeehives] = useState([]);
@@ -52,35 +46,56 @@ function Beehives() {
   }, [navigation]);
 
   useEffect(() => {
-    if (!userId || !userToken) return;
+  if (!userId || !userToken) return;
 
-    async function fetchBeehives() {
+  async function fetchBeehives() {
+    try {
+      setLoading(true);
+
+      const response = await getBeehives({
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      });
+
+      const userBeehives = response.data.filter(
+        (b) => b.producerId === userId
+      );
+
+      // Salvar cache offline
+      await AsyncStorage.setItem(`beehives_${userId}`, JSON.stringify(userBeehives));
+
+      setBeehives(userBeehives);
+    } catch (err) {
+      console.error("Erro ao carregar colmeias da API:", err);
+      console.warn("Tentando carregar colmeias do cache...");
+
       try {
-        setLoading(true);
-        const response = await getBeehives({
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-          },
-        });
-
-        const userBeehives = response.data.filter(
-          (b) => b.producerId === userId
-        );
-        setBeehives(userBeehives);
-      } catch (err) {
-        console.error("Erro ao carregar colmeias:", err);
-      } finally {
-        setLoading(false);
+        const cachedBeehives = await AsyncStorage.getItem(`beehives_${userId}`);
+        if (cachedBeehives) {
+          setBeehives(JSON.parse(cachedBeehives));
+        } else {
+          console.warn("Nenhuma colmeia salva no cache");
+        }
+      } catch (cacheError) {
+        console.error("Erro ao acessar cache de colmeias:", cacheError);
       }
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchBeehives();
-  }, [userId, userToken]);
+  fetchBeehives();
+}, [userId, userToken]);
+
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Minha(s) colmeia(s)" subtitle="Gerencie suas colmeias de forma eficiente" />
+        <Header
+          title="Minha(s) colmeia(s)"
+          subtitle="Gerencie suas colmeias de forma eficiente"
+        />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando colmeias...</Text>
         </View>
@@ -90,10 +105,13 @@ function Beehives() {
 
   return (
     <View style={styles.container}>
-      <Header title="Minha(s) colmeia(s)" subtitle="Gerencie suas colmeias de forma eficiente" />
-      
+      <Header
+        title="Minha(s) colmeia(s)"
+        subtitle="Gerencie suas colmeias de forma eficiente"
+      />
+
       {/* Conteúdo principal */}
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -122,7 +140,7 @@ function Beehives() {
           </View>
         )}
       </ScrollView>
-      
+
       <Footer />
     </View>
   );

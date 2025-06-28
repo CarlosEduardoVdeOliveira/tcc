@@ -32,7 +32,10 @@ export const getUserBeehives = async () => {
 
 export const createBeehive = async (data) => {
   const user_token = await AsyncStorage.getItem("user_token");
-  console.log("Chamando createBeehive com:", { data, user_token: user_token ? "presente" : "ausente" });
+  console.log("Chamando createBeehive com:", {
+    data,
+    user_token: user_token ? "presente" : "ausente",
+  });
   return await Api.post(`/beehive`, data, {
     headers: {
       Authorization: `Bearer ${user_token}`,

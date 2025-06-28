@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+import NetInfo from '@react-native-community/netinfo';
 import * as Location from "expo-location";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -13,7 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { z } from "zod";
@@ -63,20 +64,28 @@ function CreateBeehive() {
   });
 
   const watchedValues = watch();
-
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const userData = await AsyncStorage.getItem("user");
-        if (userData) {
-          const parsed = JSON.parse(userData);
+        const userJson = await AsyncStorage.getItem("user");
+        const token = await AsyncStorage.getItem("user_token");
+
+        if (!userJson || !token) {
+          navigation.navigate("Login");
+          return;
+        }
+        if (userJson) {
+          const parsed = JSON.parse(userJson);
           setProducerId(Number(parsed.id));
-          
+
           // Usar coordenadas do usuário se disponíveis
           if (parsed.latitude && parsed.longitude) {
             const userLat = Number(parsed.latitude);
             const userLng = Number(parsed.longitude);
-            console.log("Usando coordenadas do usuário:", { latitude: userLat, longitude: userLng });
+            console.log("Usando coordenadas do usuário:", {
+              latitude: userLat,
+              longitude: userLng,
+            });
             setCoords({ latitude: userLat, longitude: userLng });
             setValue("latitude", userLat);
             setValue("longitude", userLng);
@@ -86,8 +95,13 @@ function CreateBeehive() {
         // Se não tem coordenadas do usuário, buscar localização atual
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted") {
-          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-          setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          setCoords({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
           setValue("latitude", location.coords.latitude);
           setValue("longitude", location.coords.longitude);
         }
@@ -96,49 +110,60 @@ function CreateBeehive() {
       }
     };
     loadUser();
-  }, [setValue]);
+  }, [navigation, setValue]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
   const onSubmit = async (data) => {
-    if (!producerId) {
-      Alert.alert("Erro", "Usuário não autenticado.");
-      return;
-    }
+  if (!producerId) {
+    Alert.alert("Erro", "Usuário não autenticado.");
+    return;
+  }
 
-    // Verificar se as coordenadas estão presentes
-    if (!data.latitude || !data.longitude) {
-      Alert.alert("Erro", "Por favor, selecione a localização da colmeia no mapa.");
-      return;
-    }
+  if (!data.latitude || !data.longitude) {
+    Alert.alert("Erro", "Por favor, selecione a localização da colmeia no mapa.");
+    return;
+  }
 
-    try {
-      console.log("Dados do formulário:", data);
-      console.log("Coordenadas finais:", { latitude: data.latitude, longitude: data.longitude });
-      console.log("Dados sendo enviados para criar colmeia:", { ...data, producerId });
-      
-      await createBeehive({
-        ...data,
-        producerId,
-      });
+  try {
+    const isConnected = (await NetInfo.fetch()).isConnected;
 
+    const beehiveData = {
+      ...data,
+      producerId,
+      offline: !isConnected,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (isConnected) {
+      await createBeehive(beehiveData);
       Alert.alert("Sucesso", "Colmeia criada com sucesso!", [
         {
           text: "OK",
-          onPress: () => navigation.replace("Beehives")
-        }
+          onPress: () => navigation.replace("(tabs)", { screen: "Beehives" }),
+        },
       ]);
-    } catch (error) {
-      console.error("Erro ao criar colmeia:", error);
-      if (error.response) {
-        console.error("Resposta do servidor:", error.response.data);
-        console.error("Status:", error.response.status);
-      }
-      Alert.alert("Erro", "Falha ao criar colmeia.");
+    } else {
+      // Salva no AsyncStorage para sincronizar depois
+      const saved = await AsyncStorage.getItem("offline_beehives");
+      const parsed = saved ? JSON.parse(saved) : [];
+      parsed.push(beehiveData);
+      await AsyncStorage.setItem("offline_beehives", JSON.stringify(parsed));
+
+      Alert.alert("Modo offline", "Colmeia salva localmente e será sincronizada quando houver conexão.", [
+        {
+          text: "OK",
+          onPress: () => navigation.replace("(tabs)", { screen: "Beehives" }),
+        },
+      ]);
     }
-  };
+  } catch (error) {
+    console.error("Erro ao criar colmeia:", error);
+    Alert.alert("Erro", "Falha ao criar colmeia.");
+  }
+};
 
   const handleLocationSelect = (location) => {
     const [latitude, longitude] = location;
@@ -156,24 +181,28 @@ function CreateBeehive() {
     setShowStatusPicker(false);
   };
 
-  const handleDateChange = (event, date) => {
+  const handleDateChange = (_event, date) => {
     setShowDatePicker(false);
     if (date) {
       setSelectedDate(date);
-      const formattedDate = date.toISOString().split('T')[0];
+      const formattedDate = date.toISOString().split("T")[0];
       setValue("startDate", formattedDate);
     }
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" title="Cadastro de Colmeia" subtitle="Adicione uma nova colmeia ao seu sistema de gerenciamento" />
-      
-      <ScrollView 
+      <Header
+        pathName="Beehives"
+        title="Cadastro de Colmeia"
+        subtitle="Adicione uma nova colmeia ao seu sistema de gerenciamento"
+      />
+
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -187,7 +216,9 @@ function CreateBeehive() {
               placeholder="Digite o nome da colmeia"
               onChangeText={(text) => setValue("name", text)}
             />
-            {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+            {errors.name && (
+              <Text style={styles.error}>{errors.name.message}</Text>
+            )}
           </View>
 
           {/* Tipo de Colmeia */}
@@ -221,11 +252,15 @@ function CreateBeehive() {
             {/* Status */}
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Status</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.selectInput}
                 onPress={() => setShowStatusPicker(true)}
               >
-                <Text style={selectedStatus ? styles.selectText : styles.placeholderText}>
+                <Text
+                  style={
+                    selectedStatus ? styles.selectText : styles.placeholderText
+                  }
+                >
                   {selectedStatus || "Selecione o status"}
                 </Text>
                 <Icon name="chevron-down" size={20} color="#666" />
@@ -238,7 +273,7 @@ function CreateBeehive() {
             {/* Data */}
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Data de Início</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.selectInput}
                 onPress={() => setShowDatePicker(true)}
               >
@@ -265,17 +300,23 @@ function CreateBeehive() {
               onSelectLocation={handleLocationSelect}
               style={styles.map}
             />
-            
+
             {/* Informações das coordenadas */}
             <View style={styles.coordinatesInfo}>
               <Text style={styles.coordinatesText}>
-                Latitude: {coords.latitude !== null ? coords.latitude.toFixed(6) : 'Carregando...'}
+                Latitude:{" "}
+                {coords.latitude !== null
+                  ? coords.latitude.toFixed(6)
+                  : "Carregando..."}
               </Text>
               <Text style={styles.coordinatesText}>
-                Longitude: {coords.longitude !== null ? coords.longitude.toFixed(6) : 'Carregando...'}
+                Longitude:{" "}
+                {coords.longitude !== null
+                  ? coords.longitude.toFixed(6)
+                  : "Carregando..."}
               </Text>
             </View>
-            
+
             {errors.latitude && (
               <Text style={styles.error}>{errors.latitude.message}</Text>
             )}
@@ -285,7 +326,7 @@ function CreateBeehive() {
           </View>
 
           {/* Botão Adicionar */}
-          <Button onPress={handleSubmit(onSubmit)} >
+          <Button onPress={handleSubmit(onSubmit)}>
             <Text>Adicionar Colmeia</Text>
           </Button>
         </View>
@@ -296,25 +337,25 @@ function CreateBeehive() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Selecione o Status</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("ativa")}
             >
               <Text style={styles.modalOptionText}>Ativa</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("em manutenção")}
             >
               <Text style={styles.modalOptionText}>Em Manutenção</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => handleStatusSelect("abandonada")}
             >
               <Text style={styles.modalOptionText}>Abandonada</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.modalOption, styles.cancelOption]}
               onPress={() => setShowStatusPicker(false)}
             >
@@ -483,4 +524,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateBeehive; 
+export default CreateBeehive;

@@ -1,15 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-
+import NetInfo from "@react-native-community/netinfo";
 import { getUser } from "../../api/userApi.js";
 import Footer from "../../components/Footer.js";
 import Header from "../../components/Header.js";
@@ -20,39 +21,59 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
+  useEffect(() => {
   const loadUser = async () => {
     try {
       setLoading(true);
-      const userData = await AsyncStorage.getItem("user");
+      const userJson = await AsyncStorage.getItem("user");
       const userToken = await AsyncStorage.getItem("user_token");
 
-      if (!userData || !userToken) {
+      if (!userJson || !userToken) {
         navigation.navigate("Login");
         return;
       }
 
-      const parsedUser = JSON.parse(userData);
+      const isConnected = (await NetInfo.fetch()).isConnected;
 
-      const response = await getUser();
-      setUser(response);
+      if (isConnected) {
+        // Tenta buscar da API
+        const response = await getUser();
+        if (response) {
+          setUser(response);
+          await AsyncStorage.setItem("user", JSON.stringify(response));
+        } else {
+          throw new Error("Falha ao obter dados do usuário na API.");
+        }
+      } else {
+        // Sem conexão: carrega do cache local
+        const localUser = await AsyncStorage.getItem("user");
+        if (localUser) {
+          setUser(JSON.parse(localUser));
+        } else {
+          Alert.alert(
+            "Modo Offline",
+            "Sem conexão e nenhum dado de usuário encontrado localmente."
+          );
+        }
+      }
     } catch (error) {
       console.error("Erro ao buscar usuário:", error);
+      Alert.alert("Erro", "Não foi possível carregar os dados do usuário.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadUser();
-  }, [navigation]);
+  loadUser();
+}, [navigation]);
 
   // Recarregar dados quando a tela for focada
-  useFocusEffect(
+  /*   useFocusEffect(
     useCallback(() => {
-      loadUser();
+      
     }, [])
   );
-
+ */
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -60,31 +81,26 @@ function Profile() {
   const logOut = async () => {
     await AsyncStorage.removeItem("user_token");
     await AsyncStorage.removeItem("user");
-    navigation.navigate("Login");
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      })
+    );
   };
 
   const updateProfile = () => {
     if (!user?.id) return;
-    navigation.navigate("UpdateProfile", { id: user.id });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'ativo':
-      case 'active':
-        return { backgroundColor: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' };
-      case 'inativo':
-      case 'inactive':
-        return { backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fecaca' };
-      default:
-        return { backgroundColor: '#f3f4f6', color: '#374151', borderColor: '#d1d5db' };
-    }
+    navigation.navigate("(tabs)", {
+      screen: "UpdateProfile",
+      params: { id: user.id },
+    });
   };
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
+        <Header pathName="Beehives" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando perfil...</Text>
         </View>
@@ -95,7 +111,7 @@ function Profile() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <Header pathName="/" />
+        <Header pathName="Beehives" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Erro ao carregar perfil</Text>
         </View>
@@ -103,25 +119,30 @@ function Profile() {
     );
   }
 
-  const statusStyle = getStatusColor(user.status);
   const totalBeehives = user?.beehives?.length || 0;
-  const activeBeehives = user?.beehives?.filter(beehive => 
-    beehive.status?.toLowerCase() === 'ativo' || 
-    beehive.status?.toLowerCase() === 'ativa'
-  ).length || 0;
-  const maintenanceBeehives = user?.beehives?.filter(beehive => 
-    beehive.status?.toLowerCase() === 'manutenção' || 
-    beehive.status?.toLowerCase() === 'em manutenção'
-  ).length || 0;
-  const abandonedBeehives = user?.beehives?.filter(beehive => 
-    beehive.status?.toLowerCase() === 'abandonada' || 
-    beehive.status?.toLowerCase() === 'abandonado'
-  ).length || 0;
+  const activeBeehives =
+    user?.beehives?.filter(
+      (beehive) =>
+        beehive.status?.toLowerCase() === "ativo" ||
+        beehive.status?.toLowerCase() === "ativa"
+    ).length || 0;
+  const maintenanceBeehives =
+    user?.beehives?.filter(
+      (beehive) =>
+        beehive.status?.toLowerCase() === "manutenção" ||
+        beehive.status?.toLowerCase() === "em manutenção"
+    ).length || 0;
+  const abandonedBeehives =
+    user?.beehives?.filter(
+      (beehive) =>
+        beehive.status?.toLowerCase() === "abandonada" ||
+        beehive.status?.toLowerCase() === "abandonado"
+    ).length || 0;
 
   return (
     <View style={styles.container}>
-      <Header pathName="/" title="Meu Perfil" subtitle={user.email} />
-      <ScrollView 
+      <Header pathName={"Beehives"} title="Meu Perfil" subtitle={user.email} />
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -136,17 +157,14 @@ function Profile() {
           </View>
         </View>
         <View style={styles.headerButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editProfileButton}
             onPress={updateProfile}
           >
             <Icon name="pencil" size={16} color="#fff" />
             <Text style={styles.editProfileText}>Editar Perfil</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={logOut}
-          >
+          <TouchableOpacity style={styles.logoutButton} onPress={logOut}>
             <Icon name="log-out" size={16} color="#fff" />
             <Text style={styles.logoutText}>Sair</Text>
           </TouchableOpacity>
@@ -160,7 +178,7 @@ function Profile() {
               <Icon name="person" size={20} color="#eead2d" />
               <Text style={styles.cardTitle}>Informações Pessoais</Text>
             </View>
-            
+
             <View style={styles.infoList}>
               <View style={styles.infoItem}>
                 <Icon name="mail" size={16} color="#6b7280" />
@@ -169,7 +187,7 @@ function Profile() {
                   <Text style={styles.infoValue}>{user.email}</Text>
                 </View>
               </View>
-              
+
               <View style={styles.infoItem}>
                 <Icon name="card" size={16} color="#6b7280" />
                 <View style={styles.infoContent}>
@@ -177,22 +195,39 @@ function Profile() {
                   <Text style={styles.infoValue}>{user.cpfCnpj}</Text>
                 </View>
               </View>
-              
+
               <View style={styles.infoItem}>
                 <Icon name="calendar" size={16} color="#6b7280" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Data de Início</Text>
                   <Text style={styles.infoValue}>
-                    {user.startDate ? formatDate(user.startDate) : "Não informado"}
+                    {user.startDate
+                      ? formatDate(user.startDate)
+                      : "Não informado"}
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.infoItem}>
-                <View style={[styles.statusDot, { backgroundColor: user.status === 'Ativo' ? '#10b981' : '#ef4444' }]} />
+                <View
+                  style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor:
+                        user.status === "Ativo" ? "#10b981" : "#ef4444",
+                    },
+                  ]}
+                />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={[styles.infoValue, { color: user.status === 'Ativo' ? '#10b981' : '#ef4444' }]}>
+                  <Text
+                    style={[
+                      styles.infoValue,
+                      {
+                        color: user.status === "Ativo" ? "#10b981" : "#ef4444",
+                      },
+                    ]}
+                  >
                     {user.status}
                   </Text>
                 </View>
@@ -206,13 +241,15 @@ function Profile() {
               <Icon name="home" size={20} color="#eead2d" />
               <Text style={styles.cardTitle}>Estatísticas das Colmeias</Text>
             </View>
-            
+
             <View style={styles.statsContainer}>
               {/* Total de Colmeias */}
               <View style={styles.totalStatsCard}>
                 <View style={styles.totalStatsContent}>
                   <View>
-                    <Text style={styles.totalStatsLabel}>Total de Colmeias</Text>
+                    <Text style={styles.totalStatsLabel}>
+                      Total de Colmeias
+                    </Text>
                     <Text style={styles.totalStatsValue}>{totalBeehives}</Text>
                   </View>
                   <Icon name="home" size={32} color="#eead2d" />
@@ -221,20 +258,33 @@ function Profile() {
 
               {/* Status das Colmeias */}
               <View style={styles.statusStatsContainer}>
-                <Text style={styles.statusStatsTitle}>Status das Colmeias:</Text>
-                
+                <Text style={styles.statusStatsTitle}>
+                  Status das Colmeias:
+                </Text>
+
                 {/* Colmeias Ativas */}
                 <View style={styles.statusStatsCard}>
                   <View style={styles.statusStatsContent}>
                     <View style={styles.statusStatsInfo}>
-                      <View style={[styles.statusDot, { backgroundColor: '#10b981' }]} />
+                      <View
+                        style={[
+                          styles.statusDot,
+                          { backgroundColor: "#10b981" },
+                        ]}
+                      />
                       <View>
                         <Text style={styles.statusStatsLabel}>Ativas</Text>
-                        <Text style={styles.statusStatsValue}>{activeBeehives}</Text>
+                        <Text style={styles.statusStatsValue}>
+                          {activeBeehives}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.statusStatsPercentage}>
-                      {totalBeehives > 0 ? `${Math.round((activeBeehives / totalBeehives) * 100)}%` : '0%'}
+                      {totalBeehives > 0
+                        ? `${Math.round(
+                            (activeBeehives / totalBeehives) * 100
+                          )}%`
+                        : "0%"}
                     </Text>
                   </View>
                 </View>
@@ -243,14 +293,27 @@ function Profile() {
                 <View style={styles.statusStatsCard}>
                   <View style={styles.statusStatsContent}>
                     <View style={styles.statusStatsInfo}>
-                      <View style={[styles.statusDot, { backgroundColor: '#f59e0b' }]} />
+                      <View
+                        style={[
+                          styles.statusDot,
+                          { backgroundColor: "#f59e0b" },
+                        ]}
+                      />
                       <View>
-                        <Text style={styles.statusStatsLabel}>Em Manutenção</Text>
-                        <Text style={styles.statusStatsValue}>{maintenanceBeehives}</Text>
+                        <Text style={styles.statusStatsLabel}>
+                          Em Manutenção
+                        </Text>
+                        <Text style={styles.statusStatsValue}>
+                          {maintenanceBeehives}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.statusStatsPercentage}>
-                      {totalBeehives > 0 ? `${Math.round((maintenanceBeehives / totalBeehives) * 100)}%` : '0%'}
+                      {totalBeehives > 0
+                        ? `${Math.round(
+                            (maintenanceBeehives / totalBeehives) * 100
+                          )}%`
+                        : "0%"}
                     </Text>
                   </View>
                 </View>
@@ -259,14 +322,25 @@ function Profile() {
                 <View style={styles.statusStatsCard}>
                   <View style={styles.statusStatsContent}>
                     <View style={styles.statusStatsInfo}>
-                      <View style={[styles.statusDot, { backgroundColor: '#6b7280' }]} />
+                      <View
+                        style={[
+                          styles.statusDot,
+                          { backgroundColor: "#6b7280" },
+                        ]}
+                      />
                       <View>
                         <Text style={styles.statusStatsLabel}>Abandonadas</Text>
-                        <Text style={styles.statusStatsValue}>{abandonedBeehives}</Text>
+                        <Text style={styles.statusStatsValue}>
+                          {abandonedBeehives}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.statusStatsPercentage}>
-                      {totalBeehives > 0 ? `${Math.round((abandonedBeehives / totalBeehives) * 100)}%` : '0%'}
+                      {totalBeehives > 0
+                        ? `${Math.round(
+                            (abandonedBeehives / totalBeehives) * 100
+                          )}%`
+                        : "0%"}
                     </Text>
                   </View>
                 </View>
@@ -275,7 +349,7 @@ function Profile() {
           </View>
         </View>
       </ScrollView>
-      
+
       <Footer />
     </View>
   );

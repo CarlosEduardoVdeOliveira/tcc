@@ -1,30 +1,26 @@
-import { Stack, useRouter } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth.js';
+import { Tabs } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
 export default function TabLayout() {
-  const { signed, loading } = useAuth();
-  const router = useRouter();
-
-  if (loading) {
-    return null;
-  }
-
-  if (!signed) {
-    router.replace('/Login');
-    return null;
-  }
-
   return (
-    <Stack screenOptions={{ 
-      headerShown: false,
-      contentStyle: { backgroundColor: '#f5f5f5' }
-    }}>
-      <Stack.Screen name="Beehives" />
-      <Stack.Screen name="CreateBeehive" />
-      <Stack.Screen name="BeehiveDetails" />
-      <Stack.Screen name="UpdateBeehive" />
-      <Stack.Screen name="Profile" />
-      <Stack.Screen name="UpdateProfile" />
-    </Stack>
+    <>
+      <StatusBar style="dark" />
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: "none" }, // Esconder a tab bar se não estiver usando
+        }}
+      >
+        <Tabs.Screen name="Home" />
+        <Tabs.Screen name="Login" />
+        <Tabs.Screen name="CreateAccount" />
+        <Tabs.Screen name="Beehives" />
+        <Tabs.Screen name="CreateBeehive" />
+        <Tabs.Screen name="BeehiveDetails" />
+        <Tabs.Screen name="UpdateBeehive" />
+        <Tabs.Screen name="Profile" />
+        <Tabs.Screen name="UpdateProfile" />
+      </Tabs>
+    </>
   );
 } 

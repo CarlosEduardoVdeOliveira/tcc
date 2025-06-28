@@ -24,14 +24,16 @@ function Home() {
         </View>
 
         <View style={styles.buttons}>
-          <Button 
-            onPress={() => navigation.reset({ index: 0, routes: [{ name: "Login" }] })}
+          <Button
+            onPress={() =>
+              navigation.reset({ index: 0, routes: [{ name: "Login" }] })
+            }
             style={styles.primaryButton}
           >
             <Text style={styles.primaryButtonText}>Já tenho conta</Text>
           </Button>
 
-          <Button 
+          <Button
             onPress={() => navigation.navigate("CreateAccount")}
             style={styles.secondaryButton}
           >

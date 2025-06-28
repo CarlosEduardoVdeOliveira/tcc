@@ -1,6 +1,12 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 
 function Header({ pathName, title, subtitle }) {
@@ -9,8 +15,8 @@ function Header({ pathName, title, subtitle }) {
   const userToken = true; // Substitua por seu método de autenticação (ex: useAuth())
 
   // Garante a cor da status bar em todo render
-  StatusBar.setBackgroundColor('#eead2d');
-  StatusBar.setBarStyle('dark-content');
+  StatusBar.setBackgroundColor("#eead2d");
+  StatusBar.setBarStyle("dark-content");
 
   const handleBack = () => {
     if (pathName && pathName !== "/") {
@@ -19,16 +25,13 @@ function Header({ pathName, title, subtitle }) {
       navigation.goBack();
     }
   };
-
+  const routes = ["Beehives", "Home", "/"];
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.headerWrapper}>
         <View style={styles.header}>
-          {userToken && route.name !== "Home" ? (
-            <TouchableOpacity
-              onPress={handleBack}
-              style={styles.iconButton}
-            >
+          {userToken && !routes.includes(route.name) ? (
+            <TouchableOpacity onPress={handleBack} style={styles.iconButton}>
               <Icon name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ) : (
@@ -110,4 +113,3 @@ const styles = StyleSheet.create({
 });
 
 export default Header;
-
