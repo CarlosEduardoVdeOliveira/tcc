@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { zodResolver } from "@hookform/resolvers/zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -43,9 +44,18 @@ const statusOptions = [
 
 function UpdateBeehive() {
   const route = useRoute();
-  const { id } = route.params;
   const navigation = useNavigation();
+  if (!route.params || !route.params.id) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>
+          Erro: ID da colmeia não foi fornecido.
+        </Text>
+      </View>
+    );
+  }
 
+  const { id } = route.params;
   const [loading, setLoading] = useState(true);
   const [producerId, setProducerId] = useState("");
   const [showStatusModal, setShowStatusModal] = useState(false);

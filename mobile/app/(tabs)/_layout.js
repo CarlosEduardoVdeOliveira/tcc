@@ -12,8 +12,6 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen name="Home" />
-        <Tabs.Screen name="Login" />
-        <Tabs.Screen name="CreateAccount" />
         <Tabs.Screen name="Beehives" />
         <Tabs.Screen name="CreateBeehive" />
         <Tabs.Screen name="BeehiveDetails" />

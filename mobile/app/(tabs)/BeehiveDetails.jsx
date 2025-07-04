@@ -575,7 +575,8 @@ function BeehiveDetails() {
           <TouchableOpacity
             style={styles.editButton}
             onPress={() =>
-              navigation.navigate("(tabs)", { screen: "UpdateBeehive" }, { id })
+              /* navigation.navigate("(tabs)", { screen: "UpdateBeehive" }, { id }) */
+              navigation.navigate("UpdateBeehive", { id: beehive.id })
             }
           >
             <Icon name="pencil" size={16} color="#fff" />

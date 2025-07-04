@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useCallback, useLayoutEffect, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { getBeehives } from "../../api/beehiveApi.js";
@@ -21,72 +21,62 @@ function Beehives() {
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
-
-  useEffect(() => {
-    async function loadUserData() {
-      try {
-        const userString = await AsyncStorage.getItem("user");
-        const token = await AsyncStorage.getItem("user_token");
-
-        if (!userString || !token) {
-          navigation.navigate("Login");
-          return;
-        }
-
-        const userObj = JSON.parse(userString);
-        setUserId(userObj.id);
-        setUserToken(token);
-      } catch (error) {
-        console.error("Erro ao carregar dados do usuário:", error);
-        navigation.navigate("Login");
-      }
-    }
-
-    loadUserData();
-  }, [navigation]);
-
-  useEffect(() => {
-    if (!userId || !userToken) return;
-
-    async function fetchBeehives() {
-      try {
-        setLoading(true);
-
-        const response = await getBeehives({
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-          },
-        });
-
-        const userBeehives = response.data.filter(
-          (b) => b.producerId === userId
-        );
-
-        // Salvar cache offline
-        await AsyncStorage.setItem(`beehives_${userId}`, JSON.stringify(userBeehives));
-
-        setBeehives(userBeehives);
-      } catch (err) {
-        console.error("Erro ao carregar colmeias da API:", err);
-        console.warn("Tentando carregar colmeias do cache...");
-
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchBeehives() {
         try {
-          const cachedBeehives = await AsyncStorage.getItem(`beehives_${userId}`);
-          if (cachedBeehives) {
-            setBeehives(JSON.parse(cachedBeehives));
-          } else {
-            console.warn("Nenhuma colmeia salva no cache");
-          }
-        } catch (cacheError) {
-          console.error("Erro ao acessar cache de colmeias:", cacheError);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
+          setLoading(true);
 
-    fetchBeehives();
-  }, [userId, userToken]);
+          const userString = await AsyncStorage.getItem("user");
+          const token = await AsyncStorage.getItem("user_token");
+
+          if (!userString || !token) {
+            navigation.navigate("Login");
+            return;
+          }
+
+          const userObj = JSON.parse(userString);
+          setUserId(userObj.id);
+          setUserToken(token);
+
+          const response = await getBeehives({
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const userBeehives = response.data.filter(
+            (b) => b.producerId === userObj.id
+          );
+
+          await AsyncStorage.setItem(
+            `beehives_${userObj.id}`,
+            JSON.stringify(userBeehives)
+          );
+
+          setBeehives(userBeehives);
+        } catch (err) {
+          console.error("Erro ao carregar colmeias da API:", err);
+          try {
+            const userString = await AsyncStorage.getItem("user");
+            const userObj = JSON.parse(userString);
+            const cachedBeehives = await AsyncStorage.getItem(
+              `beehives_${userObj.id}`
+            );
+            if (cachedBeehives) {
+              setBeehives(JSON.parse(cachedBeehives));
+            }
+          } catch (cacheError) {
+            console.error("Erro ao acessar cache de colmeias:", cacheError);
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      fetchBeehives();
+    }, [navigation])
+  );
 
   if (loading) {
     return (
