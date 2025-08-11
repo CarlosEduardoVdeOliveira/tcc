@@ -283,8 +283,8 @@ function UpdateProfile() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <>
-            <ScrollView
+          <ScrollView style={{ flex: 1, border: 0 }}>
+            <View
               style={{ flex: 1 }}
               contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
               showsVerticalScrollIndicator={false}
@@ -589,9 +589,9 @@ function UpdateProfile() {
                   maximumDate={new Date()}
                 />
               )}
-            </ScrollView>
+            </View>
             <Footer />
-          </>
+          </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>

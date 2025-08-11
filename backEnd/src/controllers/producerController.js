@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { PrismaClient } from "../generated/prisma/client.js";
-import producerSchema from "../schemas/ProducerSchema.js";
+import {producerSchema, producerUpdateSchema} from "../schemas/ProducerSchema.js";
 
 const prisma = new PrismaClient();
 
@@ -75,7 +75,7 @@ const updateProducer = async (req, res) => {
   }
 
   try {
-    const data = producerSchema.partial().parse(req.body);
+    const data = producerUpdateSchema.partial().parse(req.body);
 
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
