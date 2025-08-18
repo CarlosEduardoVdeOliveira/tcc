@@ -609,7 +609,7 @@ function BeehiveDetails() {
               onPress={() => handleOpenModal("Atividade")}
             >
               <Icon name="add" size={16} color="#fff" />
-              <Text style={styles.addButtonText}>Adicionar Atividade</Text>
+              <Text style={styles.addButtonText}>Atividade</Text>
             </TouchableOpacity>
           </View>
 
@@ -736,7 +736,7 @@ function BeehiveDetails() {
               onPress={() => handleOpenModal("Alimentos")}
             >
               <Icon name="add" size={16} color="#fff" />
-              <Text style={styles.addButtonText}>Adicionar Alimento</Text>
+              <Text style={styles.addButtonText}>Alimento</Text>
             </TouchableOpacity>
           </View>
 
@@ -852,7 +852,7 @@ function BeehiveDetails() {
               onPress={() => handleOpenModal("Doenças/Pragas")}
             >
               <Icon name="add" size={16} color="#fff" />
-              <Text style={styles.addButtonText}>Adicionar Doença/Praga</Text>
+              <Text style={styles.addButtonText}>Doença/Praga</Text>
             </TouchableOpacity>
           </View>
 
@@ -976,7 +976,7 @@ function BeehiveDetails() {
               onPress={() => handleOpenModal("Produtos")}
             >
               <Icon name="add" size={16} color="#fff" />
-              <Text style={styles.addButtonText}>Adicionar Produto</Text>
+              <Text style={styles.addButtonText}>Produto</Text>
             </TouchableOpacity>
           </View>
 
@@ -1098,7 +1098,7 @@ function BeehiveDetails() {
               onPress={() => handleOpenModal("Temperatura e Umidade")}
             >
               <Icon name="add" size={16} color="#fff" />
-              <Text style={styles.addButtonText}>Adicionar Medição</Text>
+              <Text style={styles.addButtonText}>Medição</Text>
             </TouchableOpacity>
           </View>
 
