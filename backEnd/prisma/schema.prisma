@@ -56,7 +56,7 @@ model Activity {
   typeActivity String
   descriptions String
   observations String?
-  beehive      Beehive  @relation(fields: [beehiveId], references: [id])
+  beehive      Beehive  @relation(fields: [beehiveId], references: [id], onDelete: Cascade)
 
   @@map("activities")
 }
@@ -68,7 +68,7 @@ model ProductionHoney {
   amount         Decimal
   quality        String
   observations   String?
-  beehive        Beehive  @relation(fields: [beehiveId], references: [id])
+  beehive        Beehive  @relation(fields: [beehiveId], references: [id], onDelete: Cascade)
 
   @@map("production_honey")
 }
@@ -81,7 +81,7 @@ model TemperaturesHumidity {
   externalTemperature Decimal
   humidityInternal    Decimal
   humidityExternal    Decimal
-  beehive             Beehive  @relation(fields: [beehiveId], references: [id])
+  beehive             Beehive  @relation(fields: [beehiveId], references: [id], onDelete: Cascade)
 
   @@map("temperatures_humidity")
 }
@@ -93,7 +93,7 @@ model Food {
   typeFood     String
   amount       Decimal
   observations String?
-  beehive      Beehive  @relation(fields: [beehiveId], references: [id])
+  beehive      Beehive  @relation(fields: [beehiveId], references: [id], onDelete: Cascade)
 
   @@map("foods")
 }
@@ -105,7 +105,7 @@ model Disease {
   diseasePrague String
   treatment     String
   observations  String?
-  beehive       Beehive  @relation(fields: [beehiveId], references: [id])
+  beehive       Beehive  @relation(fields: [beehiveId], references: [id], onDelete: Cascade)
 
   @@map("diseases")
 }
