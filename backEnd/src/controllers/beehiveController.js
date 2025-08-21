@@ -58,8 +58,18 @@ const getBeehiveById = async (req, res) => {
 
 const createBeehive = async (req, res) => {
   try {
+    // Verifica se req.user existe
+    if (!req.user || !req.user.id) {
+      console.log('Usuário não autenticado:', req.user);
+      return res.status(401).json({ status: 'error', message: 'Usuário não autenticado' });
+    }
+
+    // Valida dados com Zod
     const data = beehiveSchema.parse(req.body);
     const producerId = req.user.id;
+
+    // Log dos dados recebidos
+    console.log('Dados recebidos para criar colmeia:', data, 'Producer ID:', producerId);
 
     const beehive = await prisma.beehive.create({
       data: {
@@ -68,8 +78,12 @@ const createBeehive = async (req, res) => {
       },
     });
 
+    console.log('Colmeia criada com sucesso:', beehive);
+
     res.status(201).json(beehive);
   } catch (error) {
+    console.error('Erro ao criar colmeia:', error);
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         status: 'error',
@@ -77,9 +91,11 @@ const createBeehive = async (req, res) => {
         errors: error.errors,
       });
     }
+
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
+
 const findAllBeehivePerStatus = async (req, res) => {
   try {
     const { status } = beehiveSchema.pick({ status: true }).parse(req.body);
@@ -147,26 +163,23 @@ const deleteBeehive = async (req, res) => {
     const { id } = req.params;
     const producerId = req.user.id;
 
-    // Verificar se a colmeia pertence ao usuário
-    const existingBeehive = await prisma.beehive.findFirst({
-      where: {
-        id: Number(id),
-        producerId: producerId,
-      },
+    if (!id) return res.status(400).json({ error: 'ID da colmeia é obrigatório' });
+
+    const deleted = await prisma.beehive.deleteMany({
+      where: { id: Number(id), producerId },
     });
 
-    if (!existingBeehive) {
-      return res.status(404).json({ error: 'Colmeia não encontrada' });
+    if (deleted.count === 0) {
+      return res.status(404).json({ error: 'Colmeia não encontrada ou não pertence ao produtor' });
     }
 
-    await prisma.beehive.delete({
-      where: { id: Number(id) },
-    });
     res.status(204).send();
   } catch (error) {
+    console.error('Erro ao deletar colmeia:', error);
     res.status(500).json({ error: error.message });
   }
 };
+
 const syncBeehives = async (req, res) => {
   try {
     const beehives = req.body;
