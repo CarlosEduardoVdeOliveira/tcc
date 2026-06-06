@@ -98,7 +98,7 @@ class Database {
       try {
         await this.prisma.$disconnect();
         this.prisma = null;
-        logger.info('🔌 Conexão com o banco de dados encerrada com sucesso');
+        logger.info('Conexão com o banco de dados encerrada com sucesso');
       } catch (error) {
         logger.error('Erro ao desconectar do banco de dados:', error);
         throw error;
